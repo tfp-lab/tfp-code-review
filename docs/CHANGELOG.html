@@ -434,6 +434,25 @@ p > img:not(.icon):only-child {
 <h1>Changelog</h1>
 <p>すべての変更はこのファイルに記録する。形式は <a href="https://keepachangelog.com/">Keep a Changelog</a> に準拠。</p>
 <h2>[Unreleased]</h2>
+<h2>[0.6.0] - 2026-05-20</h2>
+<h3>Added</h3>
+<ul>
+<li><strong>インラインレビュー対応</strong> (CodeRabbit 風): prompt で <code>mcp__github_inline_comment__create_inline_comment</code> の利用を必須化。must-fix / suggestion レベルの具体指摘は差分行に直接 post される。サマリコメントは目次・件数のみ</li>
+<li><strong><code>&lt;details&gt;</code> 折りたたみ表示</strong>: must-fix は <code>open</code> 属性で展開、suggestion / nit は折りたたみ。長いレビューでも見やすい</li>
+<li><strong>件数を見出しに表示</strong> (例: 🔴 must-fix (3 件)) で全体感が即座に把握可能</li>
+<li><strong>長いコメントの自動分割</strong>: 60,000 文字を超える場合、final rebrand step が段落単位で chunk 分割し、続きを別コメントとして post (<code>&gt; 📄 NoraBot レビュー (続き 2/3)</code> ヘッダ付き)</li>
+<li>1 段落だけで上限超のときはハード切り</li>
+<li><strong>同種指摘の集約ルール</strong> を prompt に追加 (3 件以上は代表 + 行番号リスト)</li>
+</ul>
+<h3>Changed</h3>
+<ul>
+<li>アイコン URL を <strong>tfp-code-review main 固定 URL</strong> に変更 (PR head SHA 依存だと private リポジトリで 404 する可能性)</li>
+<li>prompt にアイコン省略禁止を強調 (「最初の 2 行は必ず以下」と冒頭固定)</li>
+</ul>
+<h3>Fixed</h3>
+<ul>
+<li>レビュー本体が 60,000 文字を超えた際にコメント切り詰めで指摘が消えていた問題 → 分割 post で全件残る</li>
+</ul>
 <h2>[0.5.1] - 2026-05-20</h2>
 <h3>Added</h3>
 <ul>

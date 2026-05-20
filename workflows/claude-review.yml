@@ -77,10 +77,12 @@ jobs:
       - name: Resolve reviewer icon (Repo override)
         id: icon
         run: |
+          # 各 Repo の .tfp/icon.png があればそれ (PR head SHA で参照)、
+          # 無ければ tfp-code-review の main 固定 URL (常に最新かつ public で必ず到達可)。
           if [ -f .tfp/icon.png ]; then
             echo "url=https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.prsha.outputs.result }}/.tfp/icon.png" >> "$GITHUB_OUTPUT"
           else
-            echo "url=https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.prsha.outputs.result }}/.tfp/code-review/assets/icon.png" >> "$GITHUB_OUTPUT"
+            echo "url=https://raw.githubusercontent.com/tfp-lab/tfp-code-review/main/assets/icon.png" >> "$GITHUB_OUTPUT"
           fi
 
       # === リアルタイム rebrand watcher ===
@@ -182,35 +184,68 @@ jobs:
                - 他言語は _template.instructions.md を参考に一般的観点で
             3. .tfp/review.md  (この Repo 固有のルール、存在すれば。共通と矛盾する場合は後者を優先)
 
-            ## 出力フォーマット (Copilot 風 + NoraBot 統合)
+            ## 出力フォーマット (Copilot / CodeRabbit 風 + NoraBot 統合)
 
-            最終的に `mcp__github_comment__update_claude_comment` ツールでレビューコメントを更新します。
-            **重要**: これを呼ばないと PR 上に何も表示されません。
+            出力は **2 種類のコメントを使い分け** ます:
 
-            コメント本文は以下のテンプレートに従ってください:
+            1. **インラインコメント** (差分行への直接指摘) — `mcp__github_inline_comment__create_inline_comment` ツールを使用。
+               must-fix / suggestion レベルの **具体的な修正提案はインラインで** 各ファイル / 各行に付けてください。
+               これによりレビュアー (人間) は差分を見ながら指摘を確認できます (CodeRabbit / Copilot review と同じ UX)。
+
+            2. **サマリコメント** (PR トップに 1 件) — `mcp__github_comment__update_claude_comment` ツールでレビューコメントを更新。
+               全体サマリ・件数・カテゴリ別目次を載せます。
+               **重要**: これを呼ばないと PR トップに何も表示されません。
+
+            ### インラインコメントのルール
+            - 必ず `confirmed: true` を付けて post してください (action のフィルタを通すため)
+            - 各コメント本文は短く: 「**[must-fix] 〜の理由で〜してください**」+ 必要なら 5 行以内のコード提案
+            - 重要度ラベル `[must-fix]` / `[suggestion]` / `[nit]` を **必ず prefix** に
+            - inline で付けたら、サマリコメントの該当箇所は「行番号 + 要約」だけにし、詳細は inline 側に書く
+
+            ### サマリコメントの構造
+
+            コメント本文の最初の 2 行は **必ず** 以下とします (画像マークダウンを省略してはいけません):
 
             ```markdown
             ![NoraBot](${{ steps.icon.outputs.url }})
 
             ## NoraBot のレビュー
+            ```
 
+            続けて以下のテンプレートに従ってください:
+
+            ```markdown
             > このプルリクエストの変更内容を NoraBot がレビューしました。
             > 重要度ラベル: 🔴 [must-fix] / 🟡 [suggestion] / 🔵 [nit]
 
             ### 📋 サマリ
             <この PR が何をしているかを 2〜3 行で。Copilot のように具体的な変更点を列挙>
 
+            **指摘件数**: 🔴 N 件 / 🟡 M 件 / 🔵 K 件 (← 各カテゴリの件数を明示)
+
             ### 🔍 指摘事項
 
-            #### 🔴 must-fix
+            <details open>
+            <summary><b>🔴 must-fix (N 件) — 必ず修正してください</b></summary>
+
             - **`path/to/file.ext:42`** — <指摘の要点>
               <詳細・修正案>
 
-            #### 🟡 suggestion
+            </details>
+
+            <details>
+            <summary><b>🟡 suggestion (M 件) — 改善提案</b></summary>
+
             - **`path/to/file.ext:88`** — <指摘の要点>
 
-            #### 🔵 nit
+            </details>
+
+            <details>
+            <summary><b>🔵 nit (K 件) — 些細な指摘 (任意対応)</b></summary>
+
             - **`path/to/file.ext:120`** — <些細な指摘>
+
+            </details>
 
             ### ✅ 良かった点
             - <最低 1 つ。具体的に>
@@ -219,7 +254,30 @@ jobs:
             <sub>🤖 _Reviewed by **NoraBot** (Claude Sonnet 4.6 via AWS Bedrock) · 共通基盤: [tfp-code-review](https://github.com/tfp-lab/tfp-code-review)_</sub>
             ```
 
-            指摘がカテゴリ別にゼロ件ならその見出しごと省略。ただし「良かった点」は必ず 1 つ以上書いてください。
+            ### 見やすさのための工夫 (大事)
+
+            - **`<details>` 折りたたみ**: must-fix は `open` 属性で展開、suggestion / nit は折りたたみ。
+              読み手が must-fix だけ見て他は必要なら開く構造に
+            - **件数を見出しに含める** (例: "🔴 must-fix (3 件)") で全体感を即座に把握可能に
+            - **同種指摘の集約**: 同じパターンの指摘が 3 件以上ある場合は、代表 1 件詳述 +
+              「他 N 箇所で同様: file:L, file:L, ...」のように行番号リストだけ列挙
+            - **コードブロックは 5 行以内** に。長い修正案は要点 (diff 形式) で
+            - **1 ファイルに指摘が多い場合**: そのファイル指摘の冒頭に
+              `> このファイルは指摘 N 件。最重要のみ詳述、他は概要` と注記
+
+            ### 長さの制約
+
+            GitHub の PR コメントは **約 65,000 文字 (64 KiB)** が上限です。指摘が大量にあって本文が長く
+            なってしまっても、workflow 側で **自動的に複数コメントに分割 post** する後処理 (Final rebrand step)
+            があるため、あなた (NoraBot) は**必要なら全件を出してください**。
+            ただし以下のルールは守ること:
+
+            1. 必ず **重要度の高い順** で出力 (must-fix → suggestion → nit)
+            2. 1 段落 (`\n\n` 区切り) が **20,000 文字を超えない** ように分割
+               (分割 post の境界は段落単位なので 1 段落が長すぎると 1 コメントに収まらない)
+            3. インラインコードブロックは **20 行以内** に
+
+            指摘がカテゴリ別にゼロ件ならその `<details>` ブロックごと省略。ただし「良かった点」は必ず 1 つ以上。
 
       # === watcher 停止 ===
       - name: Stop rebrand watcher
@@ -270,6 +328,40 @@ jobs:
               [/Claude Code Action/g, 'NoraBot'],
             ];
 
+            // GitHub の issue/PR コメント本文上限 (実際は 65536 bytes だが念のため余裕)
+            const MAX_COMMENT_LEN = 60000;
+            const CHUNK_SUFFIX = '\n\n---\n> ⏩ 続きは下のコメントへ ↓';
+            const CHUNK_PREFIX_FMT = (i, n) =>
+              `> 📄 NoraBot レビュー (続き ${i}/${n})\n\n`;
+
+            // バイト境界ではなく安全に分割 (見出しや markdown を可能な限り保つ)
+            // 戦略: MAX 以下なら 1 件、超えたら段落 ("\n\n") 単位で詰めて分割
+            function splitIntoChunks(text) {
+              if (text.length <= MAX_COMMENT_LEN) return [text];
+              const paragraphs = text.split(/\n\n+/);
+              const chunks = [];
+              let buf = '';
+              for (const p of paragraphs) {
+                const candidate = buf ? buf + '\n\n' + p : p;
+                // 1 段落だけで MAX 超のときはハードに切る
+                if (p.length > MAX_COMMENT_LEN) {
+                  if (buf) { chunks.push(buf); buf = ''; }
+                  for (let i = 0; i < p.length; i += MAX_COMMENT_LEN - 200) {
+                    chunks.push(p.slice(i, i + MAX_COMMENT_LEN - 200));
+                  }
+                  continue;
+                }
+                if (candidate.length + CHUNK_SUFFIX.length > MAX_COMMENT_LEN) {
+                  chunks.push(buf);
+                  buf = p;
+                } else {
+                  buf = candidate;
+                }
+              }
+              if (buf) chunks.push(buf);
+              return chunks;
+            }
+
             // 全マッチ対象を更新 (1 件で break しない)
             for (const c of comments) {
               if (c.user?.login !== 'github-actions[bot]') continue;
@@ -282,7 +374,10 @@ jobs:
                   changed = true;
                 }
               }
-              if (changed) {
+              if (!changed && updated.length <= MAX_COMMENT_LEN) continue;
+
+              if (updated.length <= MAX_COMMENT_LEN) {
+                // 通常 rebrand
                 await github.rest.issues.updateComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
@@ -290,5 +385,36 @@ jobs:
                   body: updated,
                 });
                 core.info(`Rebranded comment ${c.id} on PR #${prNumber}`);
+                continue;
               }
+
+              // 長すぎる場合: 先頭 chunk で元コメントを更新、残りは続きコメントを post
+              const chunks = splitIntoChunks(updated);
+              core.warning(`Comment ${c.id} too long (${updated.length}). Splitting into ${chunks.length} chunks.`);
+
+              // 1 chunk 目: 元コメントを更新 + 続きへの誘導
+              const firstBody =
+                chunks[0] +
+                (chunks.length > 1 ? CHUNK_SUFFIX : '');
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: c.id,
+                body: firstBody,
+              });
+
+              // 2 chunk 目以降: 新規コメントとして post
+              for (let i = 1; i < chunks.length; i++) {
+                const body =
+                  CHUNK_PREFIX_FMT(i + 1, chunks.length) +
+                  chunks[i] +
+                  (i < chunks.length - 1 ? CHUNK_SUFFIX : '');
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body,
+                });
+              }
+              core.info(`Posted ${chunks.length} chunked comments on PR #${prNumber}`);
             }

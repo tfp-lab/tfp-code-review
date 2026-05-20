@@ -4,6 +4,23 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-20
+
+### Added
+- **インラインレビュー対応** (CodeRabbit 風): prompt で `mcp__github_inline_comment__create_inline_comment` の利用を必須化。must-fix / suggestion レベルの具体指摘は差分行に直接 post される。サマリコメントは目次・件数のみ
+- **`<details>` 折りたたみ表示**: must-fix は `open` 属性で展開、suggestion / nit は折りたたみ。長いレビューでも見やすい
+- **件数を見出しに表示** (例: 🔴 must-fix (3 件)) で全体感が即座に把握可能
+- **長いコメントの自動分割**: 60,000 文字を超える場合、final rebrand step が段落単位で chunk 分割し、続きを別コメントとして post (`> 📄 NoraBot レビュー (続き 2/3)` ヘッダ付き)
+  - 1 段落だけで上限超のときはハード切り
+- **同種指摘の集約ルール** を prompt に追加 (3 件以上は代表 + 行番号リスト)
+
+### Changed
+- アイコン URL を **tfp-code-review main 固定 URL** に変更 (PR head SHA 依存だと private リポジトリで 404 する可能性)
+- prompt にアイコン省略禁止を強調 (「最初の 2 行は必ず以下」と冒頭固定)
+
+### Fixed
+- レビュー本体が 60,000 文字を超えた際にコメント切り詰めで指摘が消えていた問題 → 分割 post で全件残る
+
 ## [0.5.1] - 2026-05-20
 
 ### Added
