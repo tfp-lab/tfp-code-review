@@ -434,6 +434,15 @@ p > img:not(.icon):only-child {
 <h1>Changelog</h1>
 <p>すべての変更はこのファイルに記録する。形式は <a href="https://keepachangelog.com/">Keep a Changelog</a> に準拠。</p>
 <h2>[Unreleased]</h2>
+<h2>[0.7.2] - 2026-05-20 (Hotfix)</h2>
+<h3>Fixed</h3>
+<ul>
+<li><code>Repository path '/home/runner/work/_temp/tfp-code-review' is not under '$GITHUB_WORKSPACE'</code> で reusable workflow が失敗していた問題を修正</li>
+<li>原因: 0.7.1 で tfp-code-review を <code>path: ${{ runner.temp }}/tfp-code-review</code> に置こうとしたが、<code>actions/checkout@v4</code> は <code>$GITHUB_WORKSPACE</code> 配下にしかチェックアウトできない仕様</li>
+<li>修正: tfp-code-review を workspace 内のサブディレクトリ <code>_tfp-code-review/</code> に変更</li>
+<li>2 度目の checkout が caller のファイルを消さないよう <code>clean: false</code> を追加</li>
+<li>prompt 内の参照パスを <code>_tfp-code-review/...</code> に統一</li>
+</ul>
 <h2>[0.7.1] - 2026-05-20 (Hotfix)</h2>
 <h3>Fixed</h3>
 <ul>

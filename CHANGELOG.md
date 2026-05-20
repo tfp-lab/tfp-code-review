@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-05-20 (Hotfix)
+
+### Fixed
+- `Repository path '/home/runner/work/_temp/tfp-code-review' is not under '$GITHUB_WORKSPACE'` で reusable workflow が失敗していた問題を修正
+  - 原因: 0.7.1 で tfp-code-review を `path: ${{ runner.temp }}/tfp-code-review` に置こうとしたが、`actions/checkout@v4` は `$GITHUB_WORKSPACE` 配下にしかチェックアウトできない仕様
+  - 修正: tfp-code-review を workspace 内のサブディレクトリ `_tfp-code-review/` に変更
+  - 2 度目の checkout が caller のファイルを消さないよう `clean: false` を追加
+  - prompt 内の参照パスを `_tfp-code-review/...` に統一
+
 ## [0.7.1] - 2026-05-20 (Hotfix)
 
 ### Fixed

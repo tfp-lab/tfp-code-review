@@ -86,14 +86,19 @@ jobs:
           ref: ${{ steps.prsha.outputs.result }}
           fetch-depth: 0
 
-      # === tfp-code-review (本リポジトリ) を /tmp にチェックアウト ===
-      # workspace ルートは caller のものなので、prompts / instructions は外部に取得して絶対パスで参照
-      - name: Checkout tfp-code-review (to /tmp)
+      # === tfp-code-review (本リポジトリ) を workspace 内のサブディレクトリに ===
+      # actions/checkout は $GITHUB_WORKSPACE 配下にしか置けないため、
+      # caller のソースと衝突しない名前 `_tfp-code-review` を使う (アンダースコア prefix で
+      # ビジネスロジックの `tfp-code-review` ディレクトリと混同しない)。
+      # workspace 直下なので caller の git 操作には影響しない (.git は caller 側のまま)。
+      - name: Checkout tfp-code-review
         uses: actions/checkout@v4
         with:
           repository: tfp-lab/tfp-code-review
           ref: ${{ inputs.tfp_code_review_ref }}
-          path: ${{ runner.temp }}/tfp-code-review
+          path: _tfp-code-review
+          # 2 度目の checkout は既存ファイルを削除しないようにする
+          clean: false
 
       - name: Resolve reviewer icon (Repo override)
         id: icon
@@ -178,17 +183,21 @@ jobs:
             以下の順序でファイルを読み、それらに従ってこの PR の差分を日本語でレビューしてください。
 
             レビュー対象の PR 差分はこの workspace のルートにあります (このディレクトリが
-            ${{ github.repository }} の checkout)。共通基盤 (tfp-code-review) は別の場所
-            (${{ runner.temp }}/tfp-code-review/) にチェックアウトされており、
-            **共通基盤側のファイルは絶対パス** で参照してください。
+            ${{ github.repository }} の checkout)。共通基盤 (tfp-code-review) は同じ workspace 内の
+            `_tfp-code-review/` サブディレクトリにチェックアウトされています。
 
-            1. ${{ runner.temp }}/tfp-code-review/prompts/CLAUDE.md  (全社共通の方針・出力フォーマット)
-            2. ${{ runner.temp }}/tfp-code-review/instructions/<lang>.instructions.md  (PR の主要言語に対応)
+            参照パス (すべて workspace ルートからの相対):
+
+            1. `_tfp-code-review/prompts/CLAUDE.md`  (全社共通の方針・出力フォーマット)
+            2. `_tfp-code-review/instructions/<lang>.instructions.md`  (PR の主要言語に対応)
                - Go なら go.instructions.md
                - TypeScript / TSX なら typescript.instructions.md
                - PHP なら php.instructions.md
                - 他言語は _template.instructions.md を参考に一般的観点で
-            3. .tfp/review.md  (この Repo 固有のルール、ワークスペースルート相対。存在すれば。共通と矛盾する場合は後者を優先)
+            3. `.tfp/review.md`  (この Repo 固有のルール、存在すれば。共通と矛盾する場合は後者を優先)
+
+            注意: `_tfp-code-review/` 配下は **共通基盤の参考資料** であり、PR 差分の対象ではありません。
+            レビュー対象の差分は `_tfp-code-review/` を **除く** workspace ルート配下のファイルです。
 
             ## 出力フォーマット (Copilot / CodeRabbit 風 + NoraBot 統合)
 
