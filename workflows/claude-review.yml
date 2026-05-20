@@ -87,14 +87,22 @@ jobs:
         with:
           # Bedrock モードを有効化 (action が CLAUDE_CODE_USE_BEDROCK=1 を設定)
           use_bedrock: "true"
-          # モデル指定は claude_args 経由 (action は ANTHROPIC_MODEL env を直接見ない)
-          claude_args: --model ${{ env.ANTHROPIC_MODEL }}
+          # claude_args:
+          # - --model でモデル指定 (action は ANTHROPIC_MODEL env を直接見ない)
+          # - --allowedTools で PR コメント投稿系 MCP ツールを明示許可。
+          #   未指定だと permission_denials が起きてコメントが post されない事象あり。
+          claude_args: |
+            --model ${{ env.ANTHROPIC_MODEL }}
+            --allowedTools mcp__github_comment__update_claude_comment,mcp__github_inline_comment__create_inline_comment,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh api:*)
           # コメントトリガーフレーズ。@norabot review などで再レビューを呼べる
           trigger_phrase: "@norabot"
-          # Claude の最終出力を 1 件の通常 PR コメント (issue comment) として post
-          # これが false (デフォルト) だと inline comment しか出ず、PR トップに何も表示されない
-          use_sticky_comment: "true"
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # tag mode + tracking comment を強制。「NoraBot is working...」的な進捗コメントが
+          # 即座に PR に post され、レビュー完了後にレビュー本文へ更新される。
+          # use_sticky_comment は pull_request event 限定で issue_comment では効かないため、
+          # こちらを使う。
+          track_progress: "true"
+          # github_token は公式 FAQ に「Only include this if you're connecting a custom GitHub app」
+          # と明記されているため、デフォルト (action 側の自動取得) に任せる。
           prompt: |
             あなたは NoraBot です — TFP の共通レビュー基盤 (tfp-code-review) を使う PR レビュアーです。
             以下の順序でファイルを読み、それらに従ってこの PR の差分を日本語でレビューしてください。
@@ -107,11 +115,11 @@ jobs:
                - 他言語は _template.instructions.md を参考に一般的観点で
             3. .tfp/review.md  (この Repo 固有のルール、存在すれば。共通と矛盾する場合は後者を優先)
 
-            出力ルール (詳細は 1 のファイルを参照):
-            - レビュー本文は必ず PR コメントとして post してください (inline comment だけでなく必ず 1 件は通常コメントを残す)
-            - 最初の行に必ず以下の画像マークダウンを入れる
+            出力ルール:
+            - **必ず `mcp__github_comment__update_claude_comment` ツールを使ってレビュー本文を PR トップのトラッキングコメントに更新してください**。これを呼ばないと PR 上に何も表示されません。
+            - コメント本文の最初の行に必ず以下の画像マークダウンを入れる
               ![NoraBot](${{ steps.icon.outputs.url }})
-            - 続けて「NoraBot のレビュー」と書く
+            - 続けて「# NoraBot のレビュー」と書く
             - 1 行サマリ
             - [must-fix] / [suggestion] / [nit] の優先度を付けた指摘リスト
             - 最後に良かった点を 1 つ以上

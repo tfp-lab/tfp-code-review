@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-05-20
+
+### Fixed
+- 「Action は走るが PR に何も表示されない」「進捗が見えない」問題を抜本対処
+  - 原因 1: `use_sticky_comment` は `pull_request` event 限定で `issue_comment` では効かない (公式 docs.usage.md 明記)
+  - 原因 2: `permission_denials_count: 2` が CI ログに出ており、Claude が PR コメント投稿用 MCP ツールを呼んだが allowlist 未指定で拒否されていた
+  - 原因 3: `github_token: ${{ secrets.GITHUB_TOKEN }}` を渡すと `github-actions[bot]` 名で動き、sticky/tracking 機能の前提 (`claude[bot]`) が崩れる (FAQ 明記)
+- 修正:
+  - `track_progress: "true"` を追加 → tag mode + tracking comment を強制。「NoraBot is working...」的な進捗コメントが即座に post され、完了後にレビュー本文へ更新される (issue_comment / pull_request 両対応)
+  - `claude_args` に `--allowedTools mcp__github_comment__update_claude_comment,mcp__github_inline_comment__create_inline_comment,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh api:*)` を追加
+  - `github_token` 入力を削除 (公式 FAQ「Only include this if you're connecting a custom GitHub app」)
+  - prompt に「**必ず `mcp__github_comment__update_claude_comment` を呼べ**」と明示
+- `use_sticky_comment: "true"` は削除 (issue_comment では効かないため track_progress に置き換え)
+
 ## [0.4.2] - 2026-05-20
 
 ### Fixed
