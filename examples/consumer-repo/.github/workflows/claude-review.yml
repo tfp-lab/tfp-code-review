@@ -109,6 +109,8 @@ jobs:
           # GITHUB_TOKEN を渡すことで OIDC 経路を完全にスキップできる。
           # トレードオフ: 投稿者が github-actions[bot] になり Claude App ブランディングは失われる。
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # `mcp__github_ci__*` 系は track_progress 時に action が自動許可するが、
+          # 念のため明示せず action 既定に任せる (--allowedTools には commentツールのみ追加)
           prompt: |
             あなたは NoraBot です — TFP の共通レビュー基盤 (tfp-code-review) を使う PR レビュアーです。
             以下の順序でファイルを読み、それらに従ってこの PR の差分を日本語でレビューしてください。
@@ -121,11 +123,100 @@ jobs:
                - 他言語は _template.instructions.md を参考に一般的観点で
             3. .tfp/review.md  (この Repo 固有のルール、存在すれば。共通と矛盾する場合は後者を優先)
 
-            出力ルール:
-            - **必ず `mcp__github_comment__update_claude_comment` ツールを使ってレビュー本文を PR トップのトラッキングコメントに更新してください**。これを呼ばないと PR 上に何も表示されません。
-            - コメント本文の最初の行に必ず以下の画像マークダウンを入れる
-              ![NoraBot](${{ steps.icon.outputs.url }})
-            - 続けて「# NoraBot のレビュー」と書く
-            - 1 行サマリ
-            - [must-fix] / [suggestion] / [nit] の優先度を付けた指摘リスト
-            - 最後に良かった点を 1 つ以上
+            ## 出力フォーマット (Copilot 風 + NoraBot 統合)
+
+            最終的に `mcp__github_comment__update_claude_comment` ツールでレビューコメントを更新します。
+            **重要**: これを呼ばないと PR 上に何も表示されません。
+
+            コメント本文は以下のテンプレートに従ってください:
+
+            ```markdown
+            ![NoraBot](${{ steps.icon.outputs.url }})
+
+            ## NoraBot のレビュー
+
+            > このプルリクエストの変更内容を NoraBot がレビューしました。
+            > 重要度ラベル: 🔴 [must-fix] / 🟡 [suggestion] / 🔵 [nit]
+
+            ### 📋 サマリ
+            <この PR が何をしているかを 2〜3 行で。Copilot のように具体的な変更点を列挙>
+
+            ### 🔍 指摘事項
+
+            #### 🔴 must-fix
+            - **`path/to/file.ext:42`** — <指摘の要点>
+              <詳細・修正案>
+
+            #### 🟡 suggestion
+            - **`path/to/file.ext:88`** — <指摘の要点>
+
+            #### 🔵 nit
+            - **`path/to/file.ext:120`** — <些細な指摘>
+
+            ### ✅ 良かった点
+            - <最低 1 つ。具体的に>
+
+            ---
+            <sub>🤖 _Reviewed by **NoraBot** (Claude Sonnet 4.6 via AWS Bedrock) · 共通基盤: [tfp-code-review](https://github.com/tfp-lab/tfp-code-review)_</sub>
+            ```
+
+            指摘がカテゴリ別にゼロ件ならその見出しごと省略。ただし「良かった点」は必ず 1 つ以上書いてください。
+
+      # === NoraBot ブランディング: action が出力する固定文言を書き換え ===
+      # action のソース (src/github/operations/comment-logic.ts:127) は
+      # "Claude finished @user's task" / "Claude encountered an error" を
+      # ハードコードしているため、実行後に PR コメント本文を文字列置換する。
+      - name: Rebrand "Claude" -> "NoraBot" in PR comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const eventName = context.eventName;
+            const prNumber = eventName === 'issue_comment'
+              ? context.issue.number
+              : context.payload.pull_request?.number;
+            if (!prNumber) {
+              core.info('No PR number resolvable, skip rebrand');
+              return;
+            }
+
+            // 直近 30 件の PR コメントから github-actions[bot] が書いた
+            // tracking comment を探し、文言を置換する
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 30,
+              sort: 'created',
+              direction: 'desc',
+            });
+
+            const replacements = [
+              [/\*\*Claude finished /g, '**NoraBot finished '],
+              [/\*\*Claude encountered an error/g, '**NoraBot encountered an error'],
+              [/Claude Code is working/g, 'NoraBot is working'],
+              [/Generated with \[Claude Code\]\(https:\/\/claude\.ai\/code\)/g, 'Generated with NoraBot'],
+            ];
+
+            for (const c of comments) {
+              if (c.user?.login !== 'github-actions[bot]') continue;
+              if (!c.body) continue;
+              let updated = c.body;
+              let changed = false;
+              for (const [pat, rep] of replacements) {
+                if (pat.test(updated)) {
+                  updated = updated.replace(pat, rep);
+                  changed = true;
+                }
+              }
+              if (changed) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: c.id,
+                  body: updated,
+                });
+                core.info(`Rebranded comment ${c.id} on PR #${prNumber}`);
+                break;
+              }
+            }

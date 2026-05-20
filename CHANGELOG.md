@@ -4,6 +4,21 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-05-20
+
+### Added
+- **NoraBot ブランディング post-job rebrand step**: action が出力する `"Claude finished @user's task"` 等の固定文言を実行後に文字列置換 (`actions/github-script@v7` で 30 件直近コメントから github-actions[bot] のトラッキングコメントを特定し更新)
+  - 置換対象: `Claude finished` → `NoraBot finished`、`Claude encountered an error` → `NoraBot encountered an error`、`Claude Code is working` → `NoraBot is working`、`Generated with [Claude Code](https://claude.ai/code)` → `Generated with NoraBot`
+- **Copilot 風レビューフォーマット** をデフォルトプロンプトに採用:
+  - 重要度ラベルに絵文字 (🔴 must-fix / 🟡 suggestion / 🔵 nit)
+  - サマリ / 指摘事項 / 良かった点 の 3 ブロック構造
+  - フッターに「Reviewed by NoraBot (Claude Sonnet 4.6 via AWS Bedrock)」のクレジット行
+
+### Notes
+- bot のアバター画像と GitHub UI 上の名前 (`github-actions[bot]`) は **GitHub App 化なしには変更不可** (技術的制約)。コメント本文先頭のアイコン + 「## NoraBot のレビュー」見出し + フッタークレジットで識別性を確保
+- post-job step は `if: always()` で実行されるため、レビュー本体が失敗しても rebrand は試みる
+- 既存コメントが残っている PR では新規コメントだけ rebrand される (既存は手動置換が必要なら `gh issue edit` 等で)
+
 ## [0.4.5] - 2026-05-20
 
 ### Fixed
