@@ -4,6 +4,8 @@
 
 ![reviewer](assets/icon.png)
 
+> ⚠️ **PUBLIC リポジトリです** — このリポジトリは consumer 側の GitHub Actions が submodule として clone できるよう **public** で公開されています。コミット前に必ず本 README の **[公開リポジトリ運用上の注意](#公開リポジトリ運用上の注意)** を読んでください。社外秘情報を含めると **永久に取り戻せません**。
+
 ## これは何?
 
 - AWS Bedrock 上の Claude (Sonnet 4.6 等) を使って **PR を自動レビュー** するための共通基盤リポジトリ
@@ -81,10 +83,82 @@ tfp-code-review/
 - 後方非互換な変更を入れるときは CHANGELOG に「Breaking」と明記し、各 Repo に告知してから main にマージする
 - 緊急停止が必要な Repo は一時的に submodule を特定 commit に pin することも可能 (`git submodule set-branch` 等)
 
+## 公開リポジトリ運用上の注意
+
+このリポジトリは **public** です。コミットする前に以下を必ず確認してください。
+**一度公開した内容は GitHub の history を含めて永久に取り戻せません。**
+
+### コミットしてはいけない情報 (NG リスト)
+
+| カテゴリ | 具体例 | 代わりに |
+|---|---|---|
+| 認証情報 | API key / token / password / secret 値 / `.env` の中身 | `secrets.XXX` で参照、値は GitHub Secrets に |
+| 内部ホスト / URL | `*.internal.tfp` / `vpn.lifetech.local` / 社内 Slack URL | 「社内エンドポイント」とだけ記述 |
+| 顧客名 / プロジェクトコードネーム | 顧客企業名 / 製品コードネーム | 一般化した表現に (例: 「保険業界向け」「金融系」) |
+| 内部 Repo 名 | `lifetech-inc/xxxx` / 社内 GitLab パス | examples では汎用的な名前 (`<your-repo>` 等) |
+| 個人情報 | メールアドレス / 個人 Slack handle / 顔写真 | git ユーザ情報のみ (Co-Authored-By 等) |
+| ビジネスロジック | 業務固有の計算式 / 料率 / 業績算出ロジック | 一般的なベストプラクティスとして抽象化 |
+| 内部攻撃面情報 | 内部 IP / 脆弱性チケット番号 / インシデント詳細 | 抽象化、もしくは記載しない |
+
+### コミットしてよい情報 (OK リスト)
+
+- 言語別ベストプラクティス (Effective Go / PSR / TS handbook 由来など、すでに公開されている知見の整理)
+- 重要度ラベルの定義 ([must-fix] / [suggestion] / [nit])
+- 出力フォーマット
+- セットアップ手順 (`AI_SETUP.md` / `QUICKSTART_PROMPT.md` のような汎用手順)
+- workflow テンプレ (secret の値は含めず、参照のみ)
+
+### コミット前のセルフチェック
+
+PR を出す前に以下を実行:
+
+```bash
+# 機密キーワードの検出
+git diff main... | grep -iE "(password|secret|token|api[-_ ]?key|credential|aws_access_key)" && echo "⚠️ チェック必要"
+
+# 社内固有名詞の検出 (組織名・顧客名は適宜追加)
+git diff main... | grep -iE "(lifetech-inc|hoken-manager|<顧客固有名>)" && echo "⚠️ 一般化を検討"
+```
+
+検出されても誤検知のことが多いので、内容を確認して問題なければ進めて OK。検出されたまま push しないこと。
+
+### Pull Request のレビュー必須化
+
+main ブランチは branch protection で以下を有効化推奨:
+
+- Require a pull request before merging
+- Require approvals: **1 名以上** (社員レビュー必須)
+- Require review from Code Owners (CODEOWNERS 配置時)
+- Restrict who can push to matching branches (org メンバーのみ)
+
+### 第三者 (org 外) からの PR
+
+- public リポジトリなので **誰でも** PR を送れます
+- マージ可否は **完全にメンテナ判断**。自動マージ禁止
+- 不審な PR (悪意あるコード混入の試み等) は close + report
+- ありがたい改善提案は普通にレビューしてマージしてよい
+
+### Public 化を取り止めるとき
+
+社内事情で private に戻す必要が出た場合:
+
+1. Settings → General → Danger Zone → Change visibility → Make private
+2. **取り止めても、それまで public だった期間に fork / clone した人がいたら取り戻せない** ことを認識
+3. consumer 側 (各 Repo の workflow) は private 化後 secret 認証 (PAT / Deploy Key) が必須になるので、合わせて切替が必要
+
+---
+
 ## Contribution
 
-PR は main ブランチに対して。CI で `prompts/CLAUDE.md` と `instructions/*.instructions.md` の構文を最低限チェックする (TODO)。
+PR は main ブランチに対して。
+
+- 社員: 通常通り PR → レビュー → マージ
+- org 外: 改善提案ありがたいですが、内部運用に依存する変更はマージ判断が遅れることがあります
+- すべての PR は **上記 NG リストに該当する情報が含まれていないか** をレビュー時に必ず確認
+
+CI で `prompts/CLAUDE.md` と `instructions/*.instructions.md` の構文を最低限チェックする (TODO)。
 
 ## ライセンス
 
-社内利用のみ (要確認)。
+社内利用を主目的とした内部ツールです。LICENSE ファイルは現状未配置 (= デフォルト = 第三者の再配布 / 改変権なし)。
+社外で再利用したい人がいる場合は org オーナーに相談してください。

@@ -434,6 +434,7 @@ p > img:not(.icon):only-child {
 <h1>tfp-code-review</h1>
 <blockquote><p>TFP の <strong>共通 PR コードレビュー基盤</strong>。各リポジトリは submodule としてこれを取り込み、薄い workflow を 1 本コピーするだけで Claude (Bedrock 経由) による自動レビューが立ち上がる。</p></blockquote>
 <p>!<a href="assets/icon.png">reviewer</a></p>
+<blockquote><p>⚠️ <strong>PUBLIC リポジトリです</strong> — このリポジトリは consumer 側の GitHub Actions が submodule として clone できるよう <strong>public</strong> で公開されています。コミット前に必ず本 README の <strong><a href="#公開リポジトリ運用上の注意">公開リポジトリ運用上の注意</a></strong> を読んでください。社外秘情報を含めると <strong>永久に取り戻せません</strong>。</p></blockquote>
 <h2>これは何?</h2>
 <ul>
 <li>AWS Bedrock 上の Claude (Sonnet 4.6 等) を使って <strong>PR を自動レビュー</strong> するための共通基盤リポジトリ</li>
@@ -492,10 +493,69 @@ done</code></pre>
 <li>後方非互換な変更を入れるときは CHANGELOG に「Breaking」と明記し、各 Repo に告知してから main にマージする</li>
 <li>緊急停止が必要な Repo は一時的に submodule を特定 commit に pin することも可能 (<code>git submodule set-branch</code> 等)</li>
 </ul>
+<h2>公開リポジトリ運用上の注意</h2>
+<p>このリポジトリは <strong>public</strong> です。コミットする前に以下を必ず確認してください。 <strong>一度公開した内容は GitHub の history を含めて永久に取り戻せません。</strong></p>
+<h3>コミットしてはいけない情報 (NG リスト)</h3>
+<table>
+<thead><tr><th>カテゴリ</th><th>具体例</th><th>代わりに</th></tr></thead>
+<tbody>
+<tr><td>認証情報</td><td>API key / token / password / secret 値 / <code>.env</code> の中身</td><td><code>secrets.XXX</code> で参照、値は GitHub Secrets に</td></tr>
+<tr><td>内部ホスト / URL</td><td><code>*.internal.tfp</code> / <code>vpn.lifetech.local</code> / 社内 Slack URL</td><td>「社内エンドポイント」とだけ記述</td></tr>
+<tr><td>顧客名 / プロジェクトコードネーム</td><td>顧客企業名 / 製品コードネーム</td><td>一般化した表現に (例: 「保険業界向け」「金融系」)</td></tr>
+<tr><td>内部 Repo 名</td><td><code>lifetech-inc/xxxx</code> / 社内 GitLab パス</td><td>examples では汎用的な名前 (<code>&lt;your-repo&gt;</code> 等)</td></tr>
+<tr><td>個人情報</td><td>メールアドレス / 個人 Slack handle / 顔写真</td><td>git ユーザ情報のみ (Co-Authored-By 等)</td></tr>
+<tr><td>ビジネスロジック</td><td>業務固有の計算式 / 料率 / 業績算出ロジック</td><td>一般的なベストプラクティスとして抽象化</td></tr>
+<tr><td>内部攻撃面情報</td><td>内部 IP / 脆弱性チケット番号 / インシデント詳細</td><td>抽象化、もしくは記載しない</td></tr>
+</tbody></table>
+<h3>コミットしてよい情報 (OK リスト)</h3>
+<ul>
+<li>言語別ベストプラクティス (Effective Go / PSR / TS handbook 由来など、すでに公開されている知見の整理)</li>
+<li>重要度ラベルの定義 ([must-fix] / [suggestion] / [nit])</li>
+<li>出力フォーマット</li>
+<li>セットアップ手順 (<code>AI_SETUP.md</code> / <code>QUICKSTART_PROMPT.md</code> のような汎用手順)</li>
+<li>workflow テンプレ (secret の値は含めず、参照のみ)</li>
+</ul>
+<h3>コミット前のセルフチェック</h3>
+<p>PR を出す前に以下を実行:</p>
+<pre><code class="language-bash"># 機密キーワードの検出
+git diff main... | grep -iE "(password|secret|token|api[-_ ]?key|credential|aws_access_key)" &amp;&amp; echo "⚠️ チェック必要"
+
+# 社内固有名詞の検出 (組織名・顧客名は適宜追加)
+git diff main... | grep -iE "(lifetech-inc|hoken-manager|&lt;顧客固有名&gt;)" &amp;&amp; echo "⚠️ 一般化を検討"</code></pre>
+<p>検出されても誤検知のことが多いので、内容を確認して問題なければ進めて OK。検出されたまま push しないこと。</p>
+<h3>Pull Request のレビュー必須化</h3>
+<p>main ブランチは branch protection で以下を有効化推奨:</p>
+<ul>
+<li>Require a pull request before merging</li>
+<li>Require approvals: <strong>1 名以上</strong> (社員レビュー必須)</li>
+<li>Require review from Code Owners (CODEOWNERS 配置時)</li>
+<li>Restrict who can push to matching branches (org メンバーのみ)</li>
+</ul>
+<h3>第三者 (org 外) からの PR</h3>
+<ul>
+<li>public リポジトリなので <strong>誰でも</strong> PR を送れます</li>
+<li>マージ可否は <strong>完全にメンテナ判断</strong>。自動マージ禁止</li>
+<li>不審な PR (悪意あるコード混入の試み等) は close + report</li>
+<li>ありがたい改善提案は普通にレビューしてマージしてよい</li>
+</ul>
+<h3>Public 化を取り止めるとき</h3>
+<p>社内事情で private に戻す必要が出た場合:</p>
+<ol>
+<li>Settings → General → Danger Zone → Change visibility → Make private</li>
+<li><strong>取り止めても、それまで public だった期間に fork / clone した人がいたら取り戻せない</strong> ことを認識</li>
+<li>consumer 側 (各 Repo の workflow) は private 化後 secret 認証 (PAT / Deploy Key) が必須になるので、合わせて切替が必要</li>
+</ol>
+<hr/>
 <h2>Contribution</h2>
-<p>PR は main ブランチに対して。CI で <code>prompts/CLAUDE.md</code> と <code>instructions/*.instructions.md</code> の構文を最低限チェックする (TODO)。</p>
+<p>PR は main ブランチに対して。</p>
+<ul>
+<li>社員: 通常通り PR → レビュー → マージ</li>
+<li>org 外: 改善提案ありがたいですが、内部運用に依存する変更はマージ判断が遅れることがあります</li>
+<li>すべての PR は <strong>上記 NG リストに該当する情報が含まれていないか</strong> をレビュー時に必ず確認</li>
+</ul>
+<p>CI で <code>prompts/CLAUDE.md</code> と <code>instructions/*.instructions.md</code> の構文を最低限チェックする (TODO)。</p>
 <h2>ライセンス</h2>
-<p>社内利用のみ (要確認)。</p>
+<p>社内利用を主目的とした内部ツールです。LICENSE ファイルは現状未配置 (= デフォルト = 第三者の再配布 / 改変権なし)。 社外で再利用したい人がいる場合は org オーナーに相談してください。</p>
 </div>
 </body>
 </html>

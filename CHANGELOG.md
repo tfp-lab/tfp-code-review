@@ -4,6 +4,24 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-20
+
+### Changed
+- リポジトリを **public** に変更 (consumer 側 GitHub Actions が `GITHUB_TOKEN` で submodule clone 可能になるため)
+- README に「公開リポジトリ運用上の注意」セクションを追加:
+  - コミットしてはいけない情報 (NG リスト 7 カテゴリ)
+  - コミットしてよい情報 (OK リスト)
+  - コミット前のセルフチェックコマンド
+  - Branch protection 推奨設定
+  - 第三者 PR への対応方針
+  - Public 化を取り止める場合の影響
+- README 冒頭に PUBLIC バナー
+- Contribution / ライセンスセクションを Public 前提に書き直し
+
+### Notes
+- このリリース時点で機密情報の漏洩なしを確認済み (`grep -i secret/password/api_key` クリア)
+- 一度 public にした内容は git history を含めて取り戻せないため、以降は NG リストの順守必須
+
 ## [0.2.2] - 2026-05-20
 
 ### Changed

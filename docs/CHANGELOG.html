@@ -434,6 +434,25 @@ p > img:not(.icon):only-child {
 <h1>Changelog</h1>
 <p>すべての変更はこのファイルに記録する。形式は <a href="https://keepachangelog.com/">Keep a Changelog</a> に準拠。</p>
 <h2>[Unreleased]</h2>
+<h2>[0.3.0] - 2026-05-20</h2>
+<h3>Changed</h3>
+<ul>
+<li>リポジトリを <strong>public</strong> に変更 (consumer 側 GitHub Actions が <code>GITHUB_TOKEN</code> で submodule clone 可能になるため)</li>
+<li>README に「公開リポジトリ運用上の注意」セクションを追加:</li>
+<li>コミットしてはいけない情報 (NG リスト 7 カテゴリ)</li>
+<li>コミットしてよい情報 (OK リスト)</li>
+<li>コミット前のセルフチェックコマンド</li>
+<li>Branch protection 推奨設定</li>
+<li>第三者 PR への対応方針</li>
+<li>Public 化を取り止める場合の影響</li>
+<li>README 冒頭に PUBLIC バナー</li>
+<li>Contribution / ライセンスセクションを Public 前提に書き直し</li>
+</ul>
+<h3>Notes</h3>
+<ul>
+<li>このリリース時点で機密情報の漏洩なしを確認済み (<code>grep -i secret/password/api_key</code> クリア)</li>
+<li>一度 public にした内容は git history を含めて取り戻せないため、以降は NG リストの順守必須</li>
+</ul>
 <h2>[0.2.2] - 2026-05-20</h2>
 <h3>Changed</h3>
 <ul>
