@@ -1,0 +1,381 @@
+name: NoraBot Reusable Review (Bedrock)
+
+# Reusable workflow. 各 Repo はこれを `uses:` で 1 行呼び出すだけ。
+# 共通改修は本ファイルだけ修正すれば全 caller に即反映される。
+#
+# 各 Repo 側 (caller) の最小例:
+#
+#   jobs:
+#     review:
+#       uses: tfp-lab/tfp-code-review/.github/workflows/review.reusable.yml@main
+#       secrets:
+#         AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
+#       # 任意: モデルやリージョンを上書きする場合
+#       with:
+#         model: jp.anthropic.claude-sonnet-4-6
+#         aws_region: ap-northeast-1
+
+on:
+  workflow_call:
+    inputs:
+      model:
+        description: "Bedrock inference profile ID (例: jp.anthropic.claude-sonnet-4-6)"
+        required: false
+        type: string
+        default: jp.anthropic.claude-sonnet-4-6
+      aws_region:
+        description: "AWS Bedrock のリージョン"
+        required: false
+        type: string
+        default: ap-northeast-1
+      tfp_code_review_ref:
+        description: "tfp-code-review のブランチ/タグ (デフォルト main)"
+        required: false
+        type: string
+        default: main
+    secrets:
+      AWS_BEARER_TOKEN_BEDROCK:
+        description: "AWS Bedrock Bearer Token"
+        required: true
+
+jobs:
+  review:
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request != null &&
+       contains(github.event.comment.body, '@norabot'))
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+
+    env:
+      ANTHROPIC_MODEL: ${{ inputs.model }}
+      AWS_REGION: ${{ inputs.aws_region }}
+      AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
+
+    steps:
+      - name: Resolve PR head SHA
+        id: prsha
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            if (context.eventName === 'issue_comment') {
+              const pr = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+              });
+              return pr.data.head.sha;
+            }
+            return context.payload.pull_request.head.sha;
+
+      # === caller リポジトリの本体 (PR 対象) を checkout ===
+      - name: Checkout caller repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.prsha.outputs.result }}
+          fetch-depth: 0
+          path: caller
+
+      # === tfp-code-review (本リポジトリ) を別パスに checkout (prompt / instructions 参照用) ===
+      - name: Checkout tfp-code-review
+        uses: actions/checkout@v4
+        with:
+          repository: tfp-lab/tfp-code-review
+          ref: ${{ inputs.tfp_code_review_ref }}
+          path: tfp-code-review
+
+      - name: Resolve reviewer icon (Repo override)
+        id: icon
+        working-directory: caller
+        run: |
+          # 各 Repo の .tfp/icon.png があればそれを優先、無ければ tfp-code-review の main 固定 URL
+          if [ -f .tfp/icon.png ]; then
+            echo "url=https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.prsha.outputs.result }}/.tfp/icon.png" >> "$GITHUB_OUTPUT"
+          else
+            echo "url=https://raw.githubusercontent.com/tfp-lab/tfp-code-review/main/assets/icon.png" >> "$GITHUB_OUTPUT"
+          fi
+
+      # === リアルタイム rebrand watcher ===
+      - name: Start rebrand watcher (background)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event_name == 'issue_comment' && github.event.issue.number || github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          cat > /tmp/norabot-rebrand.sh <<'BASH'
+          #!/usr/bin/env bash
+          set -u
+          while :; do
+            comments=$(gh api -H "Accept: application/vnd.github+json" \
+              "/repos/${REPO}/issues/${PR_NUMBER}/comments?per_page=30&sort=created&direction=desc" 2>/dev/null || echo "[]")
+            echo "$comments" | python3 -c '
+          import json, os, sys, re, subprocess
+          repo = os.environ["REPO"]
+          try:
+              data = json.load(sys.stdin)
+          except Exception:
+              sys.exit(0)
+          if not isinstance(data, list):
+              sys.exit(0)
+          repls = [
+              (re.compile(r"Claude Code is working[…\.]{1,3}"), "NoraBot is reviewing…"),
+              (re.compile(r"\*\*Claude finished "), "**NoraBot finished "),
+              (re.compile(r"\*\*Claude encountered an error"), "**NoraBot encountered an error"),
+              (re.compile(r"Generated with \[Claude Code\]\(https://claude\.ai/code\)"), "Generated with NoraBot"),
+              (re.compile(r"Claude Code Action"), "NoraBot"),
+          ]
+          for c in data:
+              if (c.get("user") or {}).get("login") != "github-actions[bot]":
+                  continue
+              body = c.get("body") or ""
+              new = body
+              for pat, rep in repls:
+                  new = pat.sub(rep, new)
+              if new != body:
+                  cid = c["id"]
+                  subprocess.run(
+                      ["gh", "api", "--method", "PATCH",
+                       f"/repos/{repo}/issues/comments/{cid}",
+                       "-f", f"body={new}"],
+                      check=False, capture_output=True,
+                  )
+          '
+            sleep 2
+          done
+          BASH
+          chmod +x /tmp/norabot-rebrand.sh
+          nohup /tmp/norabot-rebrand.sh > /tmp/norabot-rebrand.log 2>&1 &
+          echo $! > /tmp/norabot-rebrand.pid
+          echo "Rebrand watcher started (pid=$(cat /tmp/norabot-rebrand.pid))"
+
+      - name: Run NoraBot (Claude Code Action / Bedrock)
+        uses: anthropics/claude-code-action@v1
+        env:
+          REVIEWER_ICON_URL: ${{ steps.icon.outputs.url }}
+        with:
+          use_bedrock: "true"
+          claude_args: |
+            --model ${{ env.ANTHROPIC_MODEL }}
+            --allowedTools mcp__github_comment__update_claude_comment,mcp__github_inline_comment__create_inline_comment,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh api:*)
+          trigger_phrase: "@norabot"
+          track_progress: "true"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # caller は ${{ github.workspace }}/caller にあるが、action は workspace ルートを見る。
+          # workspace ルート = caller になるよう、Action 起動前にフォルダを移動するのは難しいので、
+          # prompt 側で相対パスを caller/ 始まりにする。
+          prompt: |
+            あなたは NoraBot です — TFP の共通レビュー基盤 (tfp-code-review) を使う PR レビュアーです。
+            以下の順序でファイルを読み、それらに従ってこの PR の差分を日本語でレビューしてください。
+
+            1. tfp-code-review/prompts/CLAUDE.md  (全社共通の方針・出力フォーマット — このリポジトリ ${{ github.repository }} にチェックアウト済み)
+            2. tfp-code-review/instructions/<lang>.instructions.md  (PR の主要言語に対応するもの)
+               - Go なら go.instructions.md
+               - TypeScript / TSX なら typescript.instructions.md
+               - PHP なら php.instructions.md
+               - 他言語は _template.instructions.md を参考に一般的観点で
+            3. caller/.tfp/review.md  (この Repo 固有のルール、存在すれば。共通と矛盾する場合は後者を優先)
+
+            レビュー対象の PR 差分は **caller/** 配下にあります。caller/ は呼び出し側 Repo のチェックアウトです。
+
+            ## 出力フォーマット (Copilot / CodeRabbit 風 + NoraBot 統合)
+
+            出力は **2 種類のコメントを使い分け** ます:
+
+            1. **インラインコメント** (差分行への直接指摘) — `mcp__github_inline_comment__create_inline_comment` ツールを使用。
+               must-fix / suggestion レベルの **具体的な修正提案はインラインで** 各ファイル / 各行に付けてください。
+            2. **サマリコメント** (PR トップに 1 件) — `mcp__github_comment__update_claude_comment` ツールでレビューコメントを更新。
+               全体サマリ・件数・カテゴリ別目次を載せます。
+
+            ### インラインコメントのルール
+            - 必ず `confirmed: true` を付けて post してください
+            - 各コメント本文は短く、重要度ラベル `[must-fix]` / `[suggestion]` / `[nit]` を **必ず prefix** に
+            - inline で付けたら、サマリの該当箇所は「行番号 + 要約」だけで、詳細は inline 側に書く
+
+            ### サマリコメントの構造
+
+            最初の 2 行は **必ず** 以下とします (画像マークダウンを省略してはいけません):
+
+            ```markdown
+            ![NoraBot](${{ steps.icon.outputs.url }})
+
+            ## NoraBot のレビュー
+            ```
+
+            続けて以下のテンプレートに従ってください:
+
+            ```markdown
+            > このプルリクエストの変更内容を NoraBot がレビューしました。
+            > 重要度ラベル: 🔴 [must-fix] / 🟡 [suggestion] / 🔵 [nit]
+
+            ### 📋 サマリ
+            <2〜3 行で具体的な変更点を列挙>
+
+            **指摘件数**: 🔴 N 件 / 🟡 M 件 / 🔵 K 件
+
+            ### 🔍 指摘事項
+
+            <details open>
+            <summary><b>🔴 must-fix (N 件)</b></summary>
+
+            - **`path/to/file.ext:42`** — <要約> (詳細は inline コメント参照)
+
+            </details>
+
+            <details>
+            <summary><b>🟡 suggestion (M 件)</b></summary>
+
+            - **`path/to/file.ext:88`** — <要約>
+
+            </details>
+
+            <details>
+            <summary><b>🔵 nit (K 件)</b></summary>
+
+            - **`path/to/file.ext:120`** — <些細な指摘>
+
+            </details>
+
+            ### ✅ 良かった点
+            - <最低 1 つ>
+
+            ---
+            <sub>🤖 _Reviewed by **NoraBot** (Claude Sonnet 4.6 via AWS Bedrock) · 共通基盤: [tfp-code-review](https://github.com/tfp-lab/tfp-code-review)_</sub>
+            ```
+
+            ### 長さの制約
+
+            GitHub の PR コメントは約 65,000 文字が上限です。本文がそれを超えそうなら 1 段落 (`\n\n` 区切り) を
+            20,000 文字以下に収めるように分割してください。実際の chunk 分割 post は workflow 側で自動処理します。
+
+            指摘がカテゴリ別にゼロ件ならその `<details>` ブロックごと省略。「良かった点」は必ず 1 つ以上。
+
+      - name: Stop rebrand watcher
+        if: always()
+        run: |
+          if [ -f /tmp/norabot-rebrand.pid ]; then
+            kill "$(cat /tmp/norabot-rebrand.pid)" 2>/dev/null || true
+            echo "Watcher stopped"
+          fi
+          if [ -f /tmp/norabot-rebrand.log ]; then
+            echo "::group::Watcher log (last 50 lines)"
+            tail -n 50 /tmp/norabot-rebrand.log || true
+            echo "::endgroup::"
+          fi
+
+      - name: Final rebrand "Claude" -> "NoraBot" (with chunk split)
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const eventName = context.eventName;
+            const prNumber = eventName === 'issue_comment'
+              ? context.issue.number
+              : context.payload.pull_request?.number;
+            if (!prNumber) {
+              core.info('No PR number resolvable, skip rebrand');
+              return;
+            }
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 30,
+              sort: 'created',
+              direction: 'desc',
+            });
+
+            const replacements = [
+              [/Claude Code is working[…\.]{1,3}/g, 'NoraBot is reviewing…'],
+              [/\*\*Claude finished /g, '**NoraBot finished '],
+              [/\*\*Claude encountered an error/g, '**NoraBot encountered an error'],
+              [/Generated with \[Claude Code\]\(https:\/\/claude\.ai\/code\)/g, 'Generated with NoraBot'],
+              [/Claude Code Action/g, 'NoraBot'],
+            ];
+
+            const MAX_COMMENT_LEN = 60000;
+            const CHUNK_SUFFIX = '\n\n---\n> ⏩ 続きは下のコメントへ ↓';
+            const CHUNK_PREFIX_FMT = (i, n) =>
+              `> 📄 NoraBot レビュー (続き ${i}/${n})\n\n`;
+
+            function splitIntoChunks(text) {
+              if (text.length <= MAX_COMMENT_LEN) return [text];
+              const paragraphs = text.split(/\n\n+/);
+              const chunks = [];
+              let buf = '';
+              for (const p of paragraphs) {
+                const candidate = buf ? buf + '\n\n' + p : p;
+                if (p.length > MAX_COMMENT_LEN) {
+                  if (buf) { chunks.push(buf); buf = ''; }
+                  for (let i = 0; i < p.length; i += MAX_COMMENT_LEN - 200) {
+                    chunks.push(p.slice(i, i + MAX_COMMENT_LEN - 200));
+                  }
+                  continue;
+                }
+                if (candidate.length + CHUNK_SUFFIX.length > MAX_COMMENT_LEN) {
+                  chunks.push(buf);
+                  buf = p;
+                } else {
+                  buf = candidate;
+                }
+              }
+              if (buf) chunks.push(buf);
+              return chunks;
+            }
+
+            for (const c of comments) {
+              if (c.user?.login !== 'github-actions[bot]') continue;
+              if (!c.body) continue;
+              let updated = c.body;
+              let changed = false;
+              for (const [pat, rep] of replacements) {
+                if (pat.test(updated)) {
+                  updated = updated.replace(pat, rep);
+                  changed = true;
+                }
+              }
+              if (!changed && updated.length <= MAX_COMMENT_LEN) continue;
+
+              if (updated.length <= MAX_COMMENT_LEN) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: c.id,
+                  body: updated,
+                });
+                core.info(`Rebranded comment ${c.id}`);
+                continue;
+              }
+
+              const chunks = splitIntoChunks(updated);
+              core.warning(`Comment ${c.id} too long (${updated.length}). Splitting into ${chunks.length} chunks.`);
+              const firstBody = chunks[0] + (chunks.length > 1 ? CHUNK_SUFFIX : '');
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: c.id,
+                body: firstBody,
+              });
+              for (let i = 1; i < chunks.length; i++) {
+                const body =
+                  CHUNK_PREFIX_FMT(i + 1, chunks.length) +
+                  chunks[i] +
+                  (i < chunks.length - 1 ? CHUNK_SUFFIX : '');
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body,
+                });
+              }
+              core.info(`Posted ${chunks.length} chunked comments`);
+            }

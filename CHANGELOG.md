@@ -4,6 +4,36 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-05-20 (BREAKING)
+
+### BREAKING / Architecture
+- **submodule 方式 → Reusable workflow 方式に全面移行**
+  - 動機: 共通改修のたびに各 Repo で submodule pointer 更新 + workflow 全文コピーの二重 push が必要だった
+  - v0.7 では各 Repo は **約 25 行の caller workflow** だけ持ち、`uses: tfp-lab/tfp-code-review/.github/workflows/review.reusable.yml@main` で本基盤を呼び出す
+  - 共通改修は tfp-code-review main を更新するだけで **全 Repo に即反映**
+  - 各 Repo で submodule (`.tfp/code-review/`) と `.gitmodules` は **不要**
+
+### Added
+- `.github/workflows/review.reusable.yml` (Reusable workflow 本体): `workflow_call` で外部から呼び出し可能。inputs で model / region 上書き可、secrets で `AWS_BEARER_TOKEN_BEDROCK` を inherit
+- `workflows/claude-review.yml` を新規 Repo にコピーする 25 行の caller テンプレに置き換え
+- 移行手順を AI_SETUP.md / QUICKSTART_PROMPT.md に追加 (v0.6 → v0.7)
+
+### Changed
+- AI_SETUP.md: ターゲット Repo の最終形を「caller 1 ファイル + .tfp/review.md」に簡素化
+- README.md: アーキテクチャ図を Reusable workflow 構成に更新
+- USAGE.md: 「共通基盤の更新を取り込む」を「何もしなくて OK」に書き換え
+
+### Migration (v0.6 から)
+利用側 Repo で:
+```bash
+git submodule deinit -f .tfp/code-review
+git rm -f .tfp/code-review
+rm -rf .git/modules/.tfp
+curl -fsSL https://raw.githubusercontent.com/tfp-lab/tfp-code-review/main/workflows/claude-review.yml \
+  -o .github/workflows/claude-review.yml
+git add -A && git commit -m "Migrate to tfp-code-review v0.7"
+```
+
 ## [0.6.0] - 2026-05-20
 
 ### Added

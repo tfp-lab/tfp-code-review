@@ -31,11 +31,11 @@
 
 | ファイル / ディレクトリ | 役割 | 必須? | 置く場所 | 編集する人 |
 |---|---|---|---|---|
-| `.tfp/code-review/` | 共通基盤の submodule (中身は読み取り専用扱い) | **必須** | Repo ルート | (触らない) |
+| `.github/workflows/claude-review.yml` | **Reusable workflow caller** (約 25 行) | **必須** (`workflows/` テンプレからコピー) | 標準 | この Repo の担当 (任意で model / region 上書き) |
 | `.tfp/review.md` | この Repo 固有のレビュールール | 推奨 (空でも置いとくと混乱しない) | Repo ルート | この Repo の担当 |
 | `.tfp/icon.png` | この Repo 専用 reviewer アイコン (上書き) | 任意 | Repo ルート | この Repo の担当 |
-| `.github/workflows/claude-review.yml` | 実動 workflow | **必須** (`workflows/` テンプレからコピー) | 標準 | この Repo の担当 (model 切替等) |
-| `.gitmodules` | submodule 情報 (自動生成) | 自動 | Repo ルート | (触らない) |
+
+> **submodule は不要** (v0.7 で廃止)。共通方針の更新は tfp-code-review main を更新すれば各 Repo に即反映。
 
 ### 1-2. レビュー観点を書く場所の早見表
 
@@ -233,26 +233,9 @@ env:
 
 ## 6. 共通基盤の更新を取り込む
 
-tfp-code-review に変更が入ったら、各 Repo で:
+**v0.7 以降は何もしなくて OK**。caller workflow は `@main` で reusable workflow を参照しているため、tfp-code-review main に push されれば次回 trigger から最新版で動きます。
 
-```bash
-git submodule update --remote .tfp/code-review
-git add .tfp/code-review
-git commit -m "Update tfp-code-review submodule"
-git push
-```
-
-PR をマージすれば以降のレビューに反映。
-
-### Renovate を使う場合
-
-`renovate.json` に以下を入れれば自動 PR 化:
-
-```json
-{
-  "submodules": { "enabled": true }
-}
-```
+特定バージョンに pin したい Repo のみ caller の `@main` を `@v1.0.0` 等に変更してください。
 
 ---
 

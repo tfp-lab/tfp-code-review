@@ -79,25 +79,20 @@ forced-mode で実行しても構いません。
 
 AI が動かない / シェルだけで完結したい場合の手順。**ターゲット Repo のルートで実行** してください。
 
-### B-1. 新規導入 (まだ submodule 入っていない Repo)
+### B-1. 新規導入 (Reusable workflow 方式)
 
 ```bash
-# 1. submodule 追加
-git submodule add https://github.com/tfp-lab/tfp-code-review.git .tfp/code-review
-git submodule update --init --recursive
-
-# 2. workflow をコピー
+# 1. caller workflow をコピー
 mkdir -p .github/workflows
-cp .tfp/code-review/workflows/claude-review.yml .github/workflows/claude-review.yml
+curl -fsSL https://raw.githubusercontent.com/tfp-lab/tfp-code-review/main/workflows/claude-review.yml \
+  -o .github/workflows/claude-review.yml
 
-# 3. .tfp/review.md を作成 (最低限のテンプレ)
+# 2. .tfp/review.md を作成 (最低限のテンプレ、任意)
 mkdir -p .tfp
-cat > .tfp/review.md <<'EOF'
+cat > .tfp/review.md <<EOF
 # $(basename "$PWD") 固有のレビュールール
 
 このリポジトリでは特殊事情なし。共通ルールに従う。
-
-(必要に応じて以下を埋める)
 
 ## 言語
 <Go / TypeScript / PHP …>
@@ -107,48 +102,48 @@ cat > .tfp/review.md <<'EOF'
 ## 除外ルール
 EOF
 
-# 4. commit (push は手動で確認してから)
-git add .gitmodules .tfp .github/workflows/claude-review.yml
-git commit -m "Add tfp-code-review submodule for Claude PR review"
+# 3. commit (push は手動で確認してから)
+git add .github/workflows/claude-review.yml .tfp/review.md
+git commit -m "Add NoraBot PR review (tfp-code-review reusable workflow)"
 
-# 5. (任意) push して PR を出す
+# 4. (任意) push して PR を出す
 # git push -u origin <your-branch>
-# gh pr create --title "Add Claude PR review" --body "Setup via tfp-code-review"
+# gh pr create --title "Add NoraBot review" --body "Setup via tfp-code-review reusable workflow"
 ```
 
 ### B-2. 共通ルール追従 (既に導入済み)
 
+**何もしなくて OK** (caller が `@main` で reusable workflow を参照しているため、tfp-code-review main に push されれば次回 trigger から最新版で動く)。
+
+特定バージョンに pin したい場合のみ:
+
 ```bash
-git submodule update --remote .tfp/code-review
-git add .tfp/code-review
-git commit -m "Update tfp-code-review submodule"
-git push
+sed -i.bak 's|review.reusable.yml@main|review.reusable.yml@v1.0.0|' .github/workflows/claude-review.yml
+git add .github/workflows/claude-review.yml && git commit -m "Pin tfp-code-review to v1.0.0" && git push
 ```
 
-### B-3. workflow がコピー先と古くなっていないか確認
+### B-3. v0.6 (submodule) → v0.7 (reusable) 移行
 
 ```bash
-# テンプレと現行 workflow を diff
-diff .tfp/code-review/workflows/claude-review.yml .github/workflows/claude-review.yml
-```
+# 旧 submodule 削除
+git submodule deinit -f .tfp/code-review || true
+git rm -f .tfp/code-review || true
+rm -rf .git/modules/.tfp
+[ -f .gitmodules ] && [ ! -s .gitmodules ] && git rm -f .gitmodules
 
-差分が「env (model / region) のカスタマイズだけ」なら OK。それ以外の構造的な差があれば、テンプレ最新版を取り込み直す:
+# 新 caller workflow に差し替え
+curl -fsSL https://raw.githubusercontent.com/tfp-lab/tfp-code-review/main/workflows/claude-review.yml \
+  -o .github/workflows/claude-review.yml
 
-```bash
-# モデル指定だけ保存して再コピー
-cp .github/workflows/claude-review.yml /tmp/claude-review.yml.bak
-cp .tfp/code-review/workflows/claude-review.yml .github/workflows/claude-review.yml
-# /tmp/claude-review.yml.bak を見て env だけ手で書き戻す
+git add -A
+git commit -m "Migrate to tfp-code-review v0.7 reusable workflow"
 ```
 
 ### B-4. アンインストール
 
 ```bash
-git submodule deinit -f .tfp/code-review
-git rm -f .tfp/code-review
-rm -rf .git/modules/.tfp
-git rm -f .gitmodules .github/workflows/claude-review.yml .tfp/review.md
-git commit -m "Remove tfp-code-review submodule"
+git rm -f .github/workflows/claude-review.yml .tfp/review.md
+git commit -m "Remove NoraBot PR review"
 ```
 
 ---

@@ -1,11 +1,13 @@
 # tfp-code-review
 
 > TFP の **共通 PR コードレビュー基盤** (レビュアー名: **NoraBot**)。
-> 各リポジトリは submodule としてこれを取り込み、薄い workflow を 1 本コピーするだけで NoraBot (AWS Bedrock 上の Claude) による自動レビューが立ち上がる。
+> 各リポジトリは **約 25 行の caller workflow** を 1 本配置するだけで NoraBot (AWS Bedrock 上の Claude) による自動レビューが立ち上がる。
+>
+> **v0.7 以降は Reusable workflow 方式**。submodule 不要。共通改修は tfp-code-review main を更新するだけで **全 Repo に即反映**。
 
 ![reviewer](assets/icon.png)
 
-> ⚠️ **PUBLIC リポジトリです** — このリポジトリは consumer 側の GitHub Actions が submodule として clone できるよう **public** で公開されています。コミット前に必ず本 README の **[公開リポジトリ運用上の注意](#公開リポジトリ運用上の注意)** を読んでください。社外秘情報を含めると **永久に取り戻せません**。
+> ⚠️ **PUBLIC リポジトリです** — このリポジトリは consumer 側の GitHub Actions が `uses:` で参照するため **public** で公開されています。コミット前に必ず本 README の **[公開リポジトリ運用上の注意](#公開リポジトリ運用上の注意)** を読んでください。社外秘情報を含めると **永久に取り戻せません**。
 
 ## これは何?
 
@@ -17,34 +19,37 @@
 
 ```
 tfp-code-review/
-├── README.md                          ← この概要 (人間向け)
-├── AI_SETUP.md                        ★ 外部 AI / LLM がこのページを読むだけで構成を再現できる単一ページ
+├── README.md                              ← この概要 (人間向け)
+├── AI_SETUP.md                            ★ 外部 AI / LLM がこのページを読むだけで構成を再現できる単一ページ
 ├── CHANGELOG.md
-├── prompts/CLAUDE.md                  全社共通システムプロンプト
+├── .github/workflows/
+│   └── review.reusable.yml                ★ Reusable workflow 本体 (各 Repo はこれを uses: で呼ぶ)
+├── prompts/CLAUDE.md                      全社共通システムプロンプト
 ├── instructions/
-│   ├── _template.instructions.md      新言語追加時のテンプレ
-│   ├── go.instructions.md             Go 用観点
-│   ├── typescript.instructions.md     TypeScript 用観点
-│   └── php.instructions.md            PHP 用観点
+│   ├── _template.instructions.md          新言語追加時のテンプレ
+│   ├── go.instructions.md                 Go 用観点
+│   ├── typescript.instructions.md         TypeScript 用観点
+│   └── php.instructions.md                PHP 用観点
 ├── workflows/
-│   └── claude-review.yml              各 Repo にコピーする workflow テンプレ
+│   └── claude-review.yml                  各 Repo にコピーする 25 行 caller のテンプレ
 ├── assets/
-│   └── icon.png                       デフォルト reviewer アイコン
+│   └── icon.png                           デフォルト reviewer アイコン
 └── examples/
-    └── consumer-repo/                 利用側 Repo のサンプル構成
+    └── consumer-repo/                     利用側 Repo のサンプル構成
         ├── .tfp/review.md
         └── .github/workflows/claude-review.yml
 ```
 
-## 各 Repo 側の見え方
+## 各 Repo 側の見え方 (たった 2 ファイル)
 
 ```
 <your-repo>/
 ├── .tfp/
-│   ├── code-review/                   ← この submodule (tfp-code-review @main)
-│   └── review.md                      ← この Repo 固有のレビュールール (任意)
-└── .github/workflows/claude-review.yml ← 薄い workflow (submodule から prompt を読む)
+│   └── review.md                          ← この Repo 固有のレビュールール (任意)
+└── .github/workflows/claude-review.yml    ← 約 25 行の caller (uses: で reusable を呼ぶだけ)
 ```
+
+submodule は不要です (v0.7 で廃止)。
 
 ## ドキュメント (役割別)
 
