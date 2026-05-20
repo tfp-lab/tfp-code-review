@@ -4,6 +4,19 @@
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-05-20
+
+### Fixed
+- `@norabot review` での再レビュー時、PR の差分ではなく default branch がレビューされていた問題を修正
+  - 原因: `actions/checkout@v4` に `ref` 未指定だと issue_comment トリガー時に default branch を checkout する仕様
+  - 修正: `actions/github-script@v7` で PR head SHA を API 取得し、checkout の `ref` に渡す `Resolve PR head SHA` step を追加
+- アイコン URL が default branch SHA を指していた問題を修正 (issue_comment 時 `github.event.pull_request.head.sha` が null になる)
+  - 修正: 上記 `steps.prsha.outputs.result` を使うよう変更
+- 不要な `id-token: write` 権限を削除 (Bearer Token 認証では OIDC を使わないため)
+
+### Removed
+- `env.REVIEWER_ICON_URL` (icon step 内で組み立てる方式に統一したため不要)
+
 ## [0.4.1] - 2026-05-20
 
 ### Fixed

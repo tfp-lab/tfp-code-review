@@ -434,6 +434,20 @@ p > img:not(.icon):only-child {
 <h1>Changelog</h1>
 <p>すべての変更はこのファイルに記録する。形式は <a href="https://keepachangelog.com/">Keep a Changelog</a> に準拠。</p>
 <h2>[Unreleased]</h2>
+<h2>[0.4.2] - 2026-05-20</h2>
+<h3>Fixed</h3>
+<ul>
+<li><code>@norabot review</code> での再レビュー時、PR の差分ではなく default branch がレビューされていた問題を修正</li>
+<li>原因: <code>actions/checkout@v4</code> に <code>ref</code> 未指定だと issue_comment トリガー時に default branch を checkout する仕様</li>
+<li>修正: <code>actions/github-script@v7</code> で PR head SHA を API 取得し、checkout の <code>ref</code> に渡す <code>Resolve PR head SHA</code> step を追加</li>
+<li>アイコン URL が default branch SHA を指していた問題を修正 (issue_comment 時 <code>github.event.pull_request.head.sha</code> が null になる)</li>
+<li>修正: 上記 <code>steps.prsha.outputs.result</code> を使うよう変更</li>
+<li>不要な <code>id-token: write</code> 権限を削除 (Bearer Token 認証では OIDC を使わないため)</li>
+</ul>
+<h3>Removed</h3>
+<ul>
+<li><code>env.REVIEWER_ICON_URL</code> (icon step 内で組み立てる方式に統一したため不要)</li>
+</ul>
 <h2>[0.4.1] - 2026-05-20</h2>
 <h3>Fixed</h3>
 <ul>

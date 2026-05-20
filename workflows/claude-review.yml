@@ -4,13 +4,14 @@ name: NoraBot PR Review (Bedrock)
 # 各 Repo が `.github/workflows/claude-review.yml` にコピーして使います。
 #
 # 仕組み:
-#   1. submodule (.tfp/code-review) を init
-#   2. submodule の prompts/CLAUDE.md と instructions/<lang>.instructions.md を読み
-#   3. Repo 固有の .tfp/review.md があればそれも読み
-#   4. Bedrock 経由で NoraBot (Claude) にレビューさせる
+#   1. PR head SHA を解決 (issue_comment トリガーでも PR head を見る)
+#   2. submodule (.tfp/code-review) を init
+#   3. submodule の prompts/CLAUDE.md と instructions/<lang>.instructions.md を読み
+#   4. Repo 固有の .tfp/review.md があればそれも読み
+#   5. Bedrock 経由で NoraBot (Claude) にレビューさせる
 #
 # 自動レビュー: PR の open/synchronize/reopened
-# 手動再レビュー: PR コメントで `@NoraBot` を含めて投稿 (例: `@NoraBot review`)
+# 手動再レビュー: PR コメントで `@norabot` を含めて投稿 (例: `@norabot review`)
 
 on:
   pull_request:
@@ -22,7 +23,6 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
-  id-token: write
 
 env:
   # === モデル / リージョン (各 Repo で書き換え可) ===
@@ -33,10 +33,6 @@ env:
   AWS_REGION: ap-northeast-1
   # Bedrock API Key (Bearer Token) — secrets に登録済み
   AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
-
-  # === reviewer アイコン ===
-  # 共通アイコンを submodule から参照。各 Repo で .tfp/icon.png を置けば優先される (workflow 側ロジックで対応)
-  REVIEWER_ICON_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.pull_request.head.sha || github.sha }}/.tfp/code-review/assets/icon.png
 
 jobs:
   review:
@@ -50,9 +46,28 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      # issue_comment トリガーでは github.event.pull_request は null。
+      # PR head SHA を API 経由で取得し、後続 step で使う
+      - name: Resolve PR head SHA
+        id: prsha
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            if (context.eventName === 'issue_comment') {
+              const pr = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+              });
+              return pr.data.head.sha;
+            }
+            return context.payload.pull_request.head.sha;
+
       - name: Checkout (with submodules)
         uses: actions/checkout@v4
         with:
+          ref: ${{ steps.prsha.outputs.result }}
           submodules: recursive
           fetch-depth: 0
 
@@ -60,9 +75,9 @@ jobs:
         id: icon
         run: |
           if [ -f .tfp/icon.png ]; then
-            echo "url=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.pull_request.head.sha || github.sha }}/.tfp/icon.png" >> "$GITHUB_OUTPUT"
+            echo "url=https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.prsha.outputs.result }}/.tfp/icon.png" >> "$GITHUB_OUTPUT"
           else
-            echo "url=${{ env.REVIEWER_ICON_URL }}" >> "$GITHUB_OUTPUT"
+            echo "url=https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.prsha.outputs.result }}/.tfp/code-review/assets/icon.png" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run NoraBot (Claude Code Action / Bedrock)
