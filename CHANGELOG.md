@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-05-20
+
+### Fixed
+- 0.4.3 で `id-token: write` を削除したまま `github_token` も削除したため、action が OIDC token 交換に失敗して即死する不具合を修正
+  - 原因: action のソース (`src/github/token.ts:setupGitHubToken()`) は `github_token` 入力が空のとき `core.getIDToken()` で OIDC token を取得する実装。これには `id-token: write` permission が必須
+  - 修正: `permissions:` に `id-token: write` を復活
+  - 0.4.3 の「`id-token: write` 削除」は誤った最適化だったため取り消し
+
+### Notes
+- `github_token` を渡さない方が Claude App ブランディング (`claude[bot]` 名乗り + sticky/tracking 機能) が正しく動く
+- どうしても `id-token: write` を許容できない環境では、代替として `github_token: ${{ secrets.GITHUB_TOKEN }}` を `with:` に追加する選択肢あり (ただし `github-actions[bot]` 名で post され UX が劣化)
+
 ## [0.4.3] - 2026-05-20
 
 ### Fixed

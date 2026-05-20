@@ -23,6 +23,9 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
+  # github_token を with: で明示しない場合、action は OIDC で GitHub App token を
+  # 取りに行く実装になっているため、id-token: write が必須。
+  id-token: write
 
 env:
   # === モデル / リージョン (各 Repo で書き換え可) ===

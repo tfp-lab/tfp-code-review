@@ -434,6 +434,19 @@ p > img:not(.icon):only-child {
 <h1>Changelog</h1>
 <p>すべての変更はこのファイルに記録する。形式は <a href="https://keepachangelog.com/">Keep a Changelog</a> に準拠。</p>
 <h2>[Unreleased]</h2>
+<h2>[0.4.4] - 2026-05-20</h2>
+<h3>Fixed</h3>
+<ul>
+<li>0.4.3 で <code>id-token: write</code> を削除したまま <code>github_token</code> も削除したため、action が OIDC token 交換に失敗して即死する不具合を修正</li>
+<li>原因: action のソース (<code>src/github/token.ts:setupGitHubToken()</code>) は <code>github_token</code> 入力が空のとき <code>core.getIDToken()</code> で OIDC token を取得する実装。これには <code>id-token: write</code> permission が必須</li>
+<li>修正: <code>permissions:</code> に <code>id-token: write</code> を復活</li>
+<li>0.4.3 の「<code>id-token: write</code> 削除」は誤った最適化だったため取り消し</li>
+</ul>
+<h3>Notes</h3>
+<ul>
+<li><code>github_token</code> を渡さない方が Claude App ブランディング (<code>claude[bot]</code> 名乗り + sticky/tracking 機能) が正しく動く</li>
+<li>どうしても <code>id-token: write</code> を許容できない環境では、代替として <code>github_token: ${{ secrets.GITHUB_TOKEN }}</code> を <code>with:</code> に追加する選択肢あり (ただし <code>github-actions[bot]</code> 名で post され UX が劣化)</li>
+</ul>
 <h2>[0.4.3] - 2026-05-20</h2>
 <h3>Fixed</h3>
 <ul>
