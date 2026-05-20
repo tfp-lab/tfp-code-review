@@ -83,6 +83,65 @@ jobs:
             echo "url=https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.prsha.outputs.result }}/.tfp/code-review/assets/icon.png" >> "$GITHUB_OUTPUT"
           fi
 
+      # === リアルタイム rebrand watcher ===
+      # action が "Claude Code is working…" 等の固定文言で tracking comment を post してから
+      # Claude が応答を返すまでに数十秒〜数分かかる。その間ユーザーは Claude 表記のまま
+      # 待たされるため、バックグラウンドで PR コメントをポーリングして即時 rebrand する。
+      # Run NoraBot step が終わったら自動的にプロセス終了。
+      - name: Start rebrand watcher (background)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event_name == 'issue_comment' && github.event.issue.number || github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          cat > /tmp/norabot-rebrand.sh <<'BASH'
+          #!/usr/bin/env bash
+          set -u
+          while :; do
+            # 直近 30 件の issue comment を取得して github-actions[bot] 投稿を rebrand
+            comments=$(gh api -H "Accept: application/vnd.github+json" \
+              "/repos/${REPO}/issues/${PR_NUMBER}/comments?per_page=30&sort=created&direction=desc" 2>/dev/null || echo "[]")
+            echo "$comments" | python3 -c '
+          import json, os, sys, re, subprocess
+          repo = os.environ["REPO"]
+          try:
+              data = json.load(sys.stdin)
+          except Exception:
+              sys.exit(0)
+          if not isinstance(data, list):
+              sys.exit(0)
+          repls = [
+              (re.compile(r"Claude Code is working[…\.]{1,3}"), "NoraBot is reviewing…"),
+              (re.compile(r"\*\*Claude finished "), "**NoraBot finished "),
+              (re.compile(r"\*\*Claude encountered an error"), "**NoraBot encountered an error"),
+              (re.compile(r"Generated with \[Claude Code\]\(https://claude\.ai/code\)"), "Generated with NoraBot"),
+              (re.compile(r"Claude Code Action"), "NoraBot"),
+          ]
+          for c in data:
+              if (c.get("user") or {}).get("login") != "github-actions[bot]":
+                  continue
+              body = c.get("body") or ""
+              new = body
+              for pat, rep in repls:
+                  new = pat.sub(rep, new)
+              if new != body:
+                  cid = c["id"]
+                  subprocess.run(
+                      ["gh", "api", "--method", "PATCH",
+                       f"/repos/{repo}/issues/comments/{cid}",
+                       "-f", f"body={new}"],
+                      check=False, capture_output=True,
+                  )
+          '
+            sleep 2
+          done
+          BASH
+          chmod +x /tmp/norabot-rebrand.sh
+          # nohup でバックグラウンド起動。Run NoraBot 完了後の Stop watcher で kill
+          nohup /tmp/norabot-rebrand.sh > /tmp/norabot-rebrand.log 2>&1 &
+          echo $! > /tmp/norabot-rebrand.pid
+          echo "Rebrand watcher started (pid=$(cat /tmp/norabot-rebrand.pid))"
+
       - name: Run NoraBot (Claude Code Action / Bedrock)
         uses: anthropics/claude-code-action@v1
         env:
@@ -162,11 +221,23 @@ jobs:
 
             指摘がカテゴリ別にゼロ件ならその見出しごと省略。ただし「良かった点」は必ず 1 つ以上書いてください。
 
-      # === NoraBot ブランディング: action が出力する固定文言を書き換え ===
-      # action のソース (src/github/operations/comment-logic.ts:127) は
-      # "Claude finished @user's task" / "Claude encountered an error" を
-      # ハードコードしているため、実行後に PR コメント本文を文字列置換する。
-      - name: Rebrand "Claude" -> "NoraBot" in PR comment
+      # === watcher 停止 ===
+      - name: Stop rebrand watcher
+        if: always()
+        run: |
+          if [ -f /tmp/norabot-rebrand.pid ]; then
+            kill "$(cat /tmp/norabot-rebrand.pid)" 2>/dev/null || true
+            echo "Watcher stopped"
+          fi
+          # ログを出して観察可能に
+          if [ -f /tmp/norabot-rebrand.log ]; then
+            echo "::group::Watcher log (last 50 lines)"
+            tail -n 50 /tmp/norabot-rebrand.log || true
+            echo "::endgroup::"
+          fi
+
+      # === 最終 rebrand (バックアップ): action 完了直後の "Claude finished" を必ず置換 ===
+      - name: Final rebrand "Claude" -> "NoraBot"
         if: always()
         uses: actions/github-script@v7
         with:
@@ -192,12 +263,14 @@ jobs:
             });
 
             const replacements = [
+              [/Claude Code is working[…\.]{1,3}/g, 'NoraBot is reviewing…'],
               [/\*\*Claude finished /g, '**NoraBot finished '],
               [/\*\*Claude encountered an error/g, '**NoraBot encountered an error'],
-              [/Claude Code is working/g, 'NoraBot is working'],
               [/Generated with \[Claude Code\]\(https:\/\/claude\.ai\/code\)/g, 'Generated with NoraBot'],
+              [/Claude Code Action/g, 'NoraBot'],
             ];
 
+            // 全マッチ対象を更新 (1 件で break しない)
             for (const c of comments) {
               if (c.user?.login !== 'github-actions[bot]') continue;
               if (!c.body) continue;
@@ -217,6 +290,5 @@ jobs:
                   body: updated,
                 });
                 core.info(`Rebranded comment ${c.id} on PR #${prNumber}`);
-                break;
               }
             }

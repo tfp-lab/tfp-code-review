@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-05-20
+
+### Added
+- **リアルタイム rebrand watcher**: Run NoraBot step の **前** に bash バックグラウンドプロセスを起動し、`Claude Code is working…` が PR コメントに出た瞬間 (~2 秒以内) に `NoraBot is reviewing…` へ書き換える。Claude 実行中にユーザーが Claude 表記を見続ける問題を解消
+- watcher は Run NoraBot 完了後の Stop watcher step で kill。watcher のログは Actions ログにも出力 (debug 用)
+- 最終 rebrand step は backup として残し、置換ルールを強化:
+  - `Claude Code is working…` → `NoraBot is reviewing…` を最優先
+  - `Claude Code Action` → `NoraBot` 追加
+  - 1 件で break せず全該当コメントを置換
+
+### Notes
+- bash 並列実行 (`nohup ... &` + PID 記録) を使うため、self-hosted runner / Windows runner では動作未保証 (ubuntu-latest 前提)
+- 完全 CodeRabbit 風 (アバター・bot 名変更、`pulls.createReview` API 利用) には GitHub App 化が必要なため未対応
+
 ## [0.5.0] - 2026-05-20
 
 ### Added
