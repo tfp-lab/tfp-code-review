@@ -176,7 +176,10 @@ git commit -m "Remove NoraBot PR review"
 - [ ] `cat .github/workflows/claude-review.yml` で caller workflow が存在し、`uses: tfp-lab/tfp-code-review/.github/workflows/review.reusable.yml@main` を含む
 - [ ] **`.gitmodules` および `.tfp/code-review/` は存在しない** (v0.7 では submodule 不要)
 - [ ] (任意) `.tfp/review.md` がこの Repo 固有ルールを記述
-- [ ] リポジトリ Settings → Secrets に `AWS_BEARER_TOKEN_BEDROCK` が登録済み
+- [ ] リポジトリ Settings → Secrets and variables → Actions の **Repository secrets** に `AWS_BEARER_TOKEN_BEDROCK` が登録済み (下記の画面のような状態)
+
+![AWS_BEARER_TOKEN_BEDROCK が Repository secrets に登録された状態](assets/value.jpg)
+
 - [ ] AWS Bedrock コンソール (東京) で Claude Sonnet 4.6 へのアクセス Granted
 - [ ] テスト PR を 1 本出してレビューコメントが付くこと
 

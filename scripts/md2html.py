@@ -463,8 +463,27 @@ def _escape(s: str) -> str:
     return html.escape(s, quote=False)
 
 
+_BASE_DIR: Path | None = None
+
+
+def _resolve_image_src(src: str) -> str:
+    """ローカル相対パスの画像は base64 埋め込みに変換 (HTML 単体配布のため)。"""
+    if re.match(r"^[a-z]+://", src) or src.startswith("data:") or src.startswith("/"):
+        return src
+    if _BASE_DIR is None:
+        return src
+    p = (_BASE_DIR / src).resolve()
+    if not p.is_file():
+        return src
+    mime, _ = mimetypes.guess_type(p.name)
+    if not mime:
+        mime = "application/octet-stream"
+    data = base64.b64encode(p.read_bytes()).decode("ascii")
+    return f"data:{mime};base64,{data}"
+
+
 def _inline(text: str) -> str:
-    """インライン記法 (コード/強調/リンク) を HTML に変換。"""
+    """インライン記法 (コード/強調/リンク/画像) を HTML に変換。"""
     # 1) インラインコードを先に退避 (中身のエスケープを保護)
     placeholders: list[str] = []
 
@@ -474,10 +493,19 @@ def _inline(text: str) -> str:
 
     text = re.sub(r"`([^`]+)`", _save_code, text)
 
-    # 2) 残りをエスケープ
+    # 2) 画像 ![alt](src) を先に退避 (リンクと干渉しないよう)
+    def _save_image(m: re.Match) -> str:
+        alt = _escape(m.group(1))
+        src = _resolve_image_src(m.group(2))
+        placeholders.append(f'<img src="{src}" alt="{alt}"/>')
+        return f"\x00CODE{len(placeholders) - 1}\x00"
+
+    text = re.sub(r"!\[([^\]]*)\]\(([^)\s]+)\)", _save_image, text)
+
+    # 3) 残りをエスケープ
     text = _escape(text)
 
-    # 3) リンク [text](url)
+    # 4) リンク [text](url)
     text = re.sub(
         r"\[([^\]]+)\]\(([^)\s]+)\)",
         lambda m: f'<a href="{m.group(2)}">{m.group(1)}</a>',
@@ -488,7 +516,7 @@ def _inline(text: str) -> str:
     text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
     text = re.sub(r"(?<!\*)\*([^*\s][^*]*?)\*(?!\*)", r"<em>\1</em>", text)
 
-    # 5) コードプレースホルダ復元
+    # 5) プレースホルダ (コード / 画像) 復元
     def _restore(m: re.Match) -> str:
         return placeholders[int(m.group(1))]
 
@@ -696,6 +724,8 @@ def main() -> int:
         return 1
 
     md = src.read_text(encoding="utf-8")
+    global _BASE_DIR
+    _BASE_DIR = src.parent
     body = md_to_html(md)
     title = args.title or src.stem
 

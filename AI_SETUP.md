@@ -40,7 +40,10 @@ git commit -m "Migrate to tfp-code-review v0.7 Reusable workflow"
 
 - ターゲット Repo が GitHub Actions を使える (Settings → Actions → Allow が有効)
 - ターゲット Repo の Secrets に **`AWS_BEARER_TOKEN_BEDROCK`** が登録済み
-  - 未登録なら: AWS Bedrock コンソール → API keys で Bearer Token を発行 → Repo の Settings → Secrets → Actions に登録
+  - 未登録なら: AWS Bedrock コンソール → API keys で Bearer Token を発行 → Repo の Settings → Secrets and variables → Actions の **Repository secrets** に **`AWS_BEARER_TOKEN_BEDROCK`** という名前で登録
+  - 登録後、以下のように Repository secrets 一覧に表示されていれば OK:
+
+  ![AWS_BEARER_TOKEN_BEDROCK が Repository secrets に登録された状態](assets/value.jpg)
 - AWS Bedrock の **東京リージョン (ap-northeast-1)** で Claude Sonnet 4.6 へのアクセスが Granted
 - ターゲット Repo のデフォルトブランチが `main` (異なる場合は手順中の `main` を読み替え)
 
