@@ -77,25 +77,26 @@ jobs:
             }
             return context.payload.pull_request.head.sha;
 
-      # === caller リポジトリの本体 (PR 対象) を checkout ===
+      # === caller リポジトリの本体 (PR 対象) を workspace ルートに checkout ===
+      # claude-code-action は $GITHUB_WORKSPACE を git リポジトリとして扱うため、
+      # サブディレクトリではなくルートにチェックアウトする必要がある。
       - name: Checkout caller repo
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.prsha.outputs.result }}
           fetch-depth: 0
-          path: caller
 
-      # === tfp-code-review (本リポジトリ) を別パスに checkout (prompt / instructions 参照用) ===
-      - name: Checkout tfp-code-review
+      # === tfp-code-review (本リポジトリ) を /tmp にチェックアウト ===
+      # workspace ルートは caller のものなので、prompts / instructions は外部に取得して絶対パスで参照
+      - name: Checkout tfp-code-review (to /tmp)
         uses: actions/checkout@v4
         with:
           repository: tfp-lab/tfp-code-review
           ref: ${{ inputs.tfp_code_review_ref }}
-          path: tfp-code-review
+          path: ${{ runner.temp }}/tfp-code-review
 
       - name: Resolve reviewer icon (Repo override)
         id: icon
-        working-directory: caller
         run: |
           # 各 Repo の .tfp/icon.png があればそれを優先、無ければ tfp-code-review の main 固定 URL
           if [ -f .tfp/icon.png ]; then
@@ -176,15 +177,18 @@ jobs:
             あなたは NoraBot です — TFP の共通レビュー基盤 (tfp-code-review) を使う PR レビュアーです。
             以下の順序でファイルを読み、それらに従ってこの PR の差分を日本語でレビューしてください。
 
-            1. tfp-code-review/prompts/CLAUDE.md  (全社共通の方針・出力フォーマット — このリポジトリ ${{ github.repository }} にチェックアウト済み)
-            2. tfp-code-review/instructions/<lang>.instructions.md  (PR の主要言語に対応するもの)
+            レビュー対象の PR 差分はこの workspace のルートにあります (このディレクトリが
+            ${{ github.repository }} の checkout)。共通基盤 (tfp-code-review) は別の場所
+            (${{ runner.temp }}/tfp-code-review/) にチェックアウトされており、
+            **共通基盤側のファイルは絶対パス** で参照してください。
+
+            1. ${{ runner.temp }}/tfp-code-review/prompts/CLAUDE.md  (全社共通の方針・出力フォーマット)
+            2. ${{ runner.temp }}/tfp-code-review/instructions/<lang>.instructions.md  (PR の主要言語に対応)
                - Go なら go.instructions.md
                - TypeScript / TSX なら typescript.instructions.md
                - PHP なら php.instructions.md
                - 他言語は _template.instructions.md を参考に一般的観点で
-            3. caller/.tfp/review.md  (この Repo 固有のルール、存在すれば。共通と矛盾する場合は後者を優先)
-
-            レビュー対象の PR 差分は **caller/** 配下にあります。caller/ は呼び出し側 Repo のチェックアウトです。
+            3. .tfp/review.md  (この Repo 固有のルール、ワークスペースルート相対。存在すれば。共通と矛盾する場合は後者を優先)
 
             ## 出力フォーマット (Copilot / CodeRabbit 風 + NoraBot 統合)
 

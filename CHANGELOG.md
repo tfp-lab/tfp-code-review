@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-05-20 (Hotfix)
+
+### Fixed
+- `fatal: not a git repository (or any of the parent directories): .git` で reusable workflow が失敗していた問題を修正
+  - 原因: 0.7.0 で caller を `path: caller` でサブディレクトリにチェックアウトしていたため、`$GITHUB_WORKSPACE` 直下に `.git` が無く、claude-code-action が `git fetch` 等で 128 エラーを起こしていた
+  - 修正: caller リポジトリは workspace ルートにチェックアウト、tfp-code-review は `${{ runner.temp }}/tfp-code-review` に切り出し
+  - prompt 内のパス参照を絶対パス (`${{ runner.temp }}/...`) と workspace ルート相対 (`.tfp/review.md`) に修正
+
 ## [0.7.0] - 2026-05-20 (BREAKING)
 
 ### BREAKING / Architecture

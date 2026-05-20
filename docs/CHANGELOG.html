@@ -434,6 +434,14 @@ p > img:not(.icon):only-child {
 <h1>Changelog</h1>
 <p>すべての変更はこのファイルに記録する。形式は <a href="https://keepachangelog.com/">Keep a Changelog</a> に準拠。</p>
 <h2>[Unreleased]</h2>
+<h2>[0.7.1] - 2026-05-20 (Hotfix)</h2>
+<h3>Fixed</h3>
+<ul>
+<li><code>fatal: not a git repository (or any of the parent directories): .git</code> で reusable workflow が失敗していた問題を修正</li>
+<li>原因: 0.7.0 で caller を <code>path: caller</code> でサブディレクトリにチェックアウトしていたため、<code>$GITHUB_WORKSPACE</code> 直下に <code>.git</code> が無く、claude-code-action が <code>git fetch</code> 等で 128 エラーを起こしていた</li>
+<li>修正: caller リポジトリは workspace ルートにチェックアウト、tfp-code-review は <code>${{ runner.temp }}/tfp-code-review</code> に切り出し</li>
+<li>prompt 内のパス参照を絶対パス (<code>${{ runner.temp }}/...</code>) と workspace ルート相対 (<code>.tfp/review.md</code>) に修正</li>
+</ul>
 <h2>[0.7.0] - 2026-05-20 (BREAKING)</h2>
 <h3>BREAKING / Architecture</h3>
 <ul>
