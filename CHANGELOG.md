@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-05-20
+
+### Fixed (Documentation)
+- QUICKSTART_PROMPT.md の Section A のプロンプトに **v0.6 submodule 方式の手順が残っていた** 致命バグを修正
+  - LLM がこのプロンプトをコピペすると古い submodule 方式で誤って構築してしまう状態だった
+  - Section A-1 / A-2 を Reusable workflow 方式に書き換え
+  - Section A-3 (追従) を「何もしなくて OK」に変更
+  - Section A-4 (v0.6 → v0.7 移行) を新設
+- QUICKSTART_PROMPT.md Section C の動作確認チェックリストを v0.7 整合に修正
+  - `.gitmodules` / `.tfp/code-review/` が **存在しない** ことを確認するチェックに変更
+- QUICKSTART_PROMPT.md Section D に v0.7 特有のエラー (`Repository path is not under $GITHUB_WORKSPACE` / `Claude Code is not installed`) と対処を追加
+- AI_SETUP.md §3 に **内部レイアウト (`_tfp-code-review/`)** の説明を追加。runner 上の一時状態でリポジトリには含まれないことを明示
+- README.md の「submodule pin 運用」記述を caller `@main` pin 表記に修正
+
 ## [0.7.2] - 2026-05-20 (Hotfix)
 
 ### Fixed

@@ -74,6 +74,23 @@ git commit -m "Migrate to tfp-code-review v0.7 Reusable workflow"
 
 > **submodule なし**。`.gitmodules` も不要。
 
+### 内部レイアウト (実行時のみ存在、commit 不要)
+
+reusable workflow は実行時に **caller の workspace 内にサブディレクトリ `_tfp-code-review/` を作って** tfp-code-review を取得し、そこから prompts / instructions を参照します。これは action runner 上の一時状態で、リポジトリには含まれません (アンダースコア prefix は単なる慣習)。
+
+```
+$GITHUB_WORKSPACE/                    ← caller リポジトリ (.git はここ)
+├── .tfp/review.md
+├── .github/workflows/claude-review.yml
+├── (caller の通常のソース)
+└── _tfp-code-review/                  ← runner が一時取得した tfp-code-review
+    ├── prompts/CLAUDE.md
+    ├── instructions/*.instructions.md
+    └── assets/icon.png
+```
+
+caller 側でこの `_tfp-code-review/` を意識する必要はありません。仮に `.gitignore` に書いておくのは推奨ですが必須ではありません。
+
 ---
 
 ## 4. セットアップ手順 (LLM 用 — 上から順に実行)

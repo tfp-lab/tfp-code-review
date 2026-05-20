@@ -17,7 +17,7 @@
 
 ## Section A — AI に丸投げする (推奨)
 
-### A-1. このまま貼るだけ
+### A-1. このまま貼るだけ (v0.7+ Reusable workflow 方式)
 
 ターゲット Repo のルートで AI チャット (Claude Code / Cursor / Copilot Chat) を開き、以下を **そのままコピペ** してください。
 
@@ -27,10 +27,11 @@
 
   https://raw.githubusercontent.com/tfp-lab/tfp-code-review/main/AI_SETUP.md
 
-要件:
-- submodule として `.tfp/code-review` に取り込む
-- `workflows/claude-review.yml` を `.github/workflows/claude-review.yml` にコピー
-- このリポジトリ固有のルールは `.tfp/review.md` に書く (空でも作成)
+要件 (v0.7+ Reusable workflow 方式):
+- submodule は使わない (v0.7 で廃止)。`.gitmodules` / `.tfp/code-review/` を作らないこと
+- caller workflow を作成: tfp-code-review の workflows/claude-review.yml を取得して
+  `.github/workflows/claude-review.yml` に配置 (約 25 行で uses: ... を呼ぶだけのファイル)
+- このリポジトリ固有のルールは `.tfp/review.md` に書く (任意・空でも作成可)
 - 作業内容を `git add` + `git commit` まで実施。`git push` はしないで人間に確認を取る
 
 このリポジトリの主言語と特殊事情は私 (人間) に確認してください。
@@ -38,19 +39,23 @@
 forced-mode で実行しても構いません。
 ````
 
-これで AI は AI_SETUP.md を読み、submodule 追加 → workflow コピー → `.tfp/review.md` 作成 → commit までやってくれます。
+これで AI は AI_SETUP.md を読み、caller workflow コピー → `.tfp/review.md` 作成 → commit までやってくれます。
 
 ### A-2. もう少しお節介なバージョン (AI に推測させたくない)
 
 ````
-このリポジトリに TFP 共通レビュー基盤 (tfp-code-review) を導入してください。
+このリポジトリに TFP 共通レビュー基盤 (tfp-code-review) v0.7+ Reusable workflow 方式で導入してください。
 
 正本: https://raw.githubusercontent.com/tfp-lab/tfp-code-review/main/AI_SETUP.md
 
 実行ステップ:
 1. 上記 URL の AI_SETUP.md を取得して読む
 2. このリポジトリの言語構成を git ls-files の拡張子から推定し、私に確認
-3. AI_SETUP.md の手順を実行 (submodule 追加 / workflow コピー / .tfp/review.md 作成)
+3. AI_SETUP.md の手順を実行
+   - caller workflow を `.github/workflows/claude-review.yml` に配置
+     (https://raw.githubusercontent.com/tfp-lab/tfp-code-review/main/workflows/claude-review.yml)
+   - `.tfp/review.md` 作成
+   - submodule や `.tfp/code-review/` は **作らない**
 4. `.tfp/review.md` には以下を書き込む
    - 主言語
    - 特殊事情 (独自フレームワーク・レガシー領域・除外ルール) — 私に質問しながら埋める
@@ -62,15 +67,31 @@ forced-mode で実行しても構いません。
 
 ### A-3. 既存導入済み Repo で「最新の共通ルールに追従」だけしたい
 
-````
-このリポジトリには既に `.tfp/code-review` submodule があります。
-共通ルールを最新版に追従させてください。
+**v0.7+ では何もしなくて OK** (caller が `@main` で reusable workflow を参照しているため、tfp-code-review main に push されれば次回 trigger から最新版で動く)。
 
-実行:
-1. git submodule update --remote .tfp/code-review
-2. tfp-code-review の最新 CHANGELOG.md を確認し、Breaking 変更があれば私に報告
-3. `.tfp/review.md` の内容が共通ルール変更と矛盾していないか軽く点検
-4. git add .tfp/code-review && git commit -m "Update tfp-code-review submodule"
+特定バージョンに pin している場合だけ caller の `@main` / `@v1.0.0` を更新:
+
+````
+このリポジトリの .github/workflows/claude-review.yml で
+`uses: tfp-lab/tfp-code-review/.github/workflows/review.reusable.yml@<version>` 
+の <version> を最新の安定版 (CHANGELOG.md 参照) に更新してください。
+追従する必要があるか確認するため CHANGELOG.md の差分を私に説明してください。
+````
+
+### A-4. v0.6 (submodule) → v0.7 (Reusable workflow) 移行
+
+````
+このリポジトリは tfp-code-review v0.6 (submodule) で導入されています。
+v0.7+ Reusable workflow 方式に移行してください。
+
+正本: https://raw.githubusercontent.com/tfp-lab/tfp-code-review/main/AI_SETUP.md
+の §0「v0.7.0 からの破壊的変更」セクションを参照。
+
+要件:
+- submodule (.tfp/code-review) と .gitmodules を削除
+- .github/workflows/claude-review.yml を新 caller (約 25 行) に置き換え
+- .tfp/review.md は維持
+- commit まで。push は人間が確認
 ````
 
 ---
@@ -148,15 +169,15 @@ git commit -m "Remove NoraBot PR review"
 
 ---
 
-## Section C — 動作確認チェックリスト
+## Section C — 動作確認チェックリスト (v0.7+)
 
 導入後、以下を確認:
 
-- [ ] `.gitmodules` に `[submodule ".tfp/code-review"]` が記録されている
-- [ ] `cat .tfp/code-review/AI_SETUP.md` でドキュメントが読める
-- [ ] `cat .github/workflows/claude-review.yml` で workflow が存在
-- [ ] `cat .tfp/review.md` でファイルが存在 (空でも OK)
+- [ ] `cat .github/workflows/claude-review.yml` で caller workflow が存在し、`uses: tfp-lab/tfp-code-review/.github/workflows/review.reusable.yml@main` を含む
+- [ ] **`.gitmodules` および `.tfp/code-review/` は存在しない** (v0.7 では submodule 不要)
+- [ ] (任意) `.tfp/review.md` がこの Repo 固有ルールを記述
 - [ ] リポジトリ Settings → Secrets に `AWS_BEARER_TOKEN_BEDROCK` が登録済み
+- [ ] AWS Bedrock コンソール (東京) で Claude Sonnet 4.6 へのアクセス Granted
 - [ ] テスト PR を 1 本出してレビューコメントが付くこと
 
 ---
@@ -165,10 +186,12 @@ git commit -m "Remove NoraBot PR review"
 
 | 症状 | 対処 |
 |---|---|
-| AI が AI_SETUP.md を読めない (権限なし) | tfp-code-review が public でないなら一時的に Section B の bash で手動 |
-| submodule init が SSH エラー | URL を https:// に揃える: `git config -f .gitmodules submodule.".tfp/code-review".url https://github.com/tfp-lab/tfp-code-review.git` |
+| AI が AI_SETUP.md を読めない (権限なし) | tfp-code-review は **public** で公開されているので通常は読める。読めない場合 Section B の bash で手動 |
+| `Claude Code is not installed on this repository` | reusable workflow 内で `github_token: ${{ secrets.GITHUB_TOKEN }}` が渡されているか確認 (v0.7 では既定で渡している) |
+| `Repository path '...' is not under '$GITHUB_WORKSPACE'` | reusable workflow が古い (0.7.1 以前)。`@main` で参照していれば自動で 0.7.2+ に更新される |
 | `.tfp/review.md` のテンプレが古い | tfp-code-review の `examples/consumer-repo/.tfp/review.md` を見る |
 | Workflow が動かない | `gh run list -L 5` でログ確認、Actions タブで失敗メッセージを見る |
+| 旧 submodule 構成のままで動かない | Section B-3 (v0.6 → v0.7 移行) を実行 |
 
 それ以外は [AI_SETUP.md](AI_SETUP.md) §6 トラブルシューティングへ。
 

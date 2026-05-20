@@ -85,9 +85,9 @@ submodule は不要です (v0.7 で廃止)。
 
 ## バージョン管理方針
 
-- 各 Repo は `main` ブランチを submodule で参照する **main pin** 運用
+- 各 Repo の caller workflow は `uses: tfp-lab/tfp-code-review/.github/workflows/review.reusable.yml@main` で **main pin** 運用
 - 後方非互換な変更を入れるときは CHANGELOG に「Breaking」と明記し、各 Repo に告知してから main にマージする
-- 緊急停止が必要な Repo は一時的に submodule を特定 commit に pin することも可能 (`git submodule set-branch` 等)
+- 緊急停止が必要な Repo は一時的に caller の `@main` を `@v0.7.2` (特定 tag/commit) に pin することで影響を切り離せる
 
 ## 公開リポジトリ運用上の注意
 
