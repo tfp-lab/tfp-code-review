@@ -1,6 +1,7 @@
-# USAGE.md — 使い方ガイド & プロジェクト個別設定の早見表
+# USAGE.md — Norabot の使い方 & プロジェクト個別設定の早見表
 
-> このドキュメントは **tfp-code-review を導入済みの Repo で、日常的にレビュー機能を使う人** 向けです。
+> このドキュメントは **tfp-code-review を導入済みの Repo で、日常的に Norabot レビュー機能を使う人** 向けです。
+> Norabot は本基盤の AI レビュアー (Claude / Bedrock) の呼称です。
 > 初期セットアップは [AI_SETUP.md](AI_SETUP.md)、自動コピペで一発導入したい人は [QUICKSTART_PROMPT.md](QUICKSTART_PROMPT.md) を参照してください。
 
 ---
@@ -10,10 +11,10 @@
 | やりたいこと | やること |
 |---|---|
 | **PR を出してレビューしてほしい** | いつも通り PR を作るだけ。自動で走ります |
-| **もう一度レビューさせたい** | PR コメントに `@claude review` |
-| **特定の観点で見てほしい** | コメントに `@claude セキュリティ観点で再確認して` |
-| **特定ファイルだけ見てほしい** | コメントに `@claude src/handler/foo.go だけ詳しく見て` |
-| **指摘に反論したい** | 該当指摘へのリプライで `@claude` 付きで質問 |
+| **もう一度レビューさせたい** | PR コメントに `@norabot review` |
+| **特定の観点で見てほしい** | コメントに `@norabot セキュリティ観点で再確認して` |
+| **特定ファイルだけ見てほしい** | コメントに `@norabot src/handler/foo.go だけ詳しく見て` |
+| **指摘に反論したい** | 該当指摘へのリプライで `@norabot` 付きで質問 |
 | **このリポジトリだけのルールを足したい** | `.tfp/review.md` を編集して PR |
 | **全社のルールを変えたい** | tfp-code-review に PR (main へ) |
 | **共通ルール更新を取り込みたい** | `git submodule update --remote .tfp/code-review && git commit` |
@@ -143,30 +144,30 @@ Go (主)
 
 PR を `opened` / `synchronize` / `reopened` すると自動で走ります。止めたい場合は draft PR にしておく。
 
-### 3-2. アノテーション (`@claude`)
+### 3-2. アノテーション (`@norabot`)
 
-PR の **Issue コメント欄** に `@claude` を含むコメントを投稿するとトリガー。
-
-```
-@claude review
-```
+PR の **Issue コメント欄** に `@norabot` (大文字小文字どちらでも可) を含むコメントを投稿するとトリガー。
 
 ```
-@claude セキュリティとパフォーマンスに絞って再レビュー。
+@norabot review
+```
+
+```
+@norabot セキュリティとパフォーマンスに絞って再レビュー。
 特に N+1 と認可漏れを重点的に。
 ```
 
 ```
-@claude src/handler/foo.go だけ詳しく見て。
+@norabot src/handler/foo.go だけ詳しく見て。
 他は無視していい。
 ```
 
 ### 3-3. 指摘へのリプライ
 
-指摘スレッド内で `@claude` を含むリプライを投稿すれば対話できます。
+指摘スレッド内で `@norabot` を含むリプライを投稿すれば対話できます。
 
 ```
-@claude
+@norabot
 この指摘は他ハンドラと書き方を揃えているので、ここで修正すると
 全体の一貫性が崩れます。別 issue 化が妥当な認識ですが、見解をください。
 ```

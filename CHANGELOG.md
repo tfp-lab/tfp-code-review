@@ -4,6 +4,29 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-20
+
+### Added
+- レビュアーに **Norabot** という呼称を導入。トリガーは `@norabot` (大文字小文字どちらでも OK)
+- workflow に `trigger_phrase: "@norabot"` 入力を追加 (action 側のメンション検出を独自フレーズに切替)
+- 出力フォーマット冒頭に「`# Norabot のレビュー`」見出しを追加
+- prompt に「**通常 PR コメント (issue comment) として 1 件 post せよ**」を明記 — inline 専用だと PR トップに表示されない問題を回避
+
+### Changed
+- workflow の `name:` を「Norabot PR Review (Bedrock)」に変更
+- `prompts/CLAUDE.md` の役割記述を Norabot ベースに書き換え
+- `USAGE.md` の `@claude` 言及を `@norabot` に置換
+- 出力先頭の画像 alt を `reviewer` → `Norabot`
+
+### Notes
+- bot 自体のアバター (GitHub 上の `github-actions[bot]`) は **GitHub App 化なしには変更不可**。表示名 / アバターは引き続き github-actions[bot]、ただしコメント本文は Norabot 名乗り + アイコン画像 markdown で識別可能
+- 既存 `@claude` で投稿されたコメントは **トリガーされなくなる** ので注意
+
+### Migration (利用側 Repo)
+1. `git submodule update --remote .tfp/code-review`
+2. `cp .tfp/code-review/workflows/claude-review.yml .github/workflows/claude-review.yml` (workflow を最新版に更新)
+3. commit & push
+
 ## [0.3.1] - 2026-05-20
 
 ### Fixed
