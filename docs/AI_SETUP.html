@@ -485,8 +485,10 @@ cp .tfp/code-review/workflows/claude-review.yml .github/workflows/claude-review.
 <p><code>.github/workflows/claude-review.yml</code> 上部の <code>env:</code> セクションを確認し、必要に応じて変更:</p>
 <pre><code class="language-yaml">env:
   ANTHROPIC_MODEL: jp.anthropic.claude-sonnet-4-6   # デフォルト: 東京リージョン Sonnet 4.6
-  AWS_REGION: ap-northeast-1                         # デフォルト: 東京</code></pre>
+  AWS_REGION: ap-northeast-1                         # デフォルト: 東京
+  AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}  # 触らなくて OK</code></pre>
 <p>別モデル / 別リージョンを使う場合のみここを変更します。デフォルトで OK ならスキップ。</p>
+<blockquote><p>認証は <strong>Bedrock API Key (Bearer Token)</strong> 方式を採用しています。OIDC (IAM Role assume) は使いません。 <code>claude-code-action@v1</code> は <code>AWS_BEARER_TOKEN_BEDROCK</code> をネイティブサポートしています (公式 docs/cloud-providers.md は古く OIDC のみと書かれていますが、ソース上は対応済み)。 モデル ID は workflow 内で <code>claude_args: --model ${{ env.ANTHROPIC_MODEL }}</code> の形で action に渡される実装になっています。</p></blockquote>
 <h3>Step 5: Repo 固有ルール (<code>.tfp/review.md</code>) を作成</h3>
 <pre><code class="language-bash">mkdir -p .tfp</code></pre>
 <p><code>.tfp/review.md</code> を以下のテンプレで作成 (Repo 固有事情を書く場所):</p>
@@ -562,6 +564,8 @@ git push</code></pre>
 <tr><td>PR を作ってもレビューが付かない</td><td>workflow がデフォルトブランチに無い / Actions が disable</td><td>Settings → Actions で許可。<code>gh run list -R &lt;owner&gt;/&lt;repo&gt;</code> で実行状況を確認</td></tr>
 <tr><td><code>Submodule path '.tfp/code-review' not initialized</code></td><td>チェックアウト時に submodule init していない</td><td>workflow 内で <code>submodules: recursive</code> 必須。<code>git submodule update --init --recursive</code> を手元でも実行</td></tr>
 <tr><td><code>AccessDeniedException</code> (Bedrock)</td><td>(1) <code>AWS_BEARER_TOKEN_BEDROCK</code> 未設定 (2) Bedrock の Model access が Granted でない (3) リージョン不一致</td><td>順番に確認</td></tr>
+<tr><td><code>Either ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN is required</code></td><td>workflow の <code>with:</code> に <code>use_bedrock: "true"</code> が無い</td><td>テンプレ最新版を再コピー (<code>cp .tfp/code-review/workflows/claude-review.yml .github/workflows/</code>)</td></tr>
+<tr><td><code>403 Authorization header is missing</code></td><td>claude-code 内部の Bedrock 認証で Bearer Token が空文字</td><td>secret <code>AWS_BEARER_TOKEN_BEDROCK</code> の値が空でないか確認。再生成も検討</td></tr>
 <tr><td><code>ResourceNotFoundException: model not found</code></td><td><code>ANTHROPIC_MODEL</code> の inference profile ID が誤り</td><td>AWS コンソール → Bedrock (東京) → Inference profiles で正確な ID を確認</td></tr>
 <tr><td>アイコンが PR コメントに出ない</td><td>private リポジトリの raw URL 問題</td><td>tfp-code-review を public 化、もしくは PR コメントの絵文字フォールバックを許可</td></tr>
 <tr><td>レビューが英語で来る</td><td>prompt の言語指示が弱い</td><td><code>.tfp/review.md</code> で「日本語で書け」を強調</td></tr>

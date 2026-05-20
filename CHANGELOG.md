@@ -4,6 +4,23 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-05-20
+
+### Fixed
+- workflow が `Either ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN is required` で失敗する不具合を修正
+  - 原因: action の `use_bedrock` を `with:` ではなく env (`CLAUDE_CODE_USE_BEDROCK`) で渡していたため、`anthropics/claude-code-action@v1` が Bedrock モードと認識せず、デフォルトの API キー認証パスに落ちていた
+  - 修正: `with: use_bedrock: "true"` に変更。`AWS_BEARER_TOKEN_BEDROCK` は workflow の job env で渡す形に整理 (action が env から自動で読み取る)
+  - モデル ID は `claude_args: --model ${{ env.ANTHROPIC_MODEL }}` で渡すように変更 (action は `ANTHROPIC_MODEL` env を直接参照しない)
+
+### Added
+- AI_SETUP.md トラブルシューティングに以下のエラー対処を追加
+  - `Either ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN is required` (workflow テンプレ古い)
+  - `403 Authorization header is missing` (Bearer Token 空文字)
+- 認証方式を AI_SETUP.md に明記 (Bedrock API Key / Bearer Token、OIDC は不使用)
+
+### Notes
+- `anthropics/claude-code-action@v1` は公式 docs では Bedrock = OIDC のみと記載されているが、実装上は `AWS_BEARER_TOKEN_BEDROCK` をネイティブサポート (`base-action/src/validate-env.ts` 参照)。本リポジトリはこの実装挙動に依存
+
 ## [0.3.0] - 2026-05-20
 
 ### Changed

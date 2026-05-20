@@ -26,8 +26,13 @@ permissions:
 
 env:
   # === モデル / リージョン (各 Repo で書き換え可) ===
+  # claude-code-action は AWS_BEARER_TOKEN_BEDROCK を直接読みます (公式 docs/cloud-providers.md は OIDC のみと
+  # 書かれていますが、実装上は Bearer Token もサポート済み — base-action/src/validate-env.ts 参照)。
+  # モデル ID は claude_args の --model で渡します。
   ANTHROPIC_MODEL: jp.anthropic.claude-sonnet-4-6
   AWS_REGION: ap-northeast-1
+  # Bedrock API Key (Bearer Token) — secrets に登録済み
+  AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
 
   # === reviewer アイコン ===
   # 共通アイコンを submodule から参照。各 Repo で .tfp/icon.png を置けば優先される (workflow 側ロジックで対応)
@@ -63,12 +68,12 @@ jobs:
       - name: Run Claude Code Action (Bedrock)
         uses: anthropics/claude-code-action@v1
         env:
-          CLAUDE_CODE_USE_BEDROCK: "1"
-          AWS_REGION: ${{ env.AWS_REGION }}
-          AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
-          ANTHROPIC_MODEL: ${{ env.ANTHROPIC_MODEL }}
           REVIEWER_ICON_URL: ${{ steps.icon.outputs.url }}
         with:
+          # Bedrock モードを有効化 (action が CLAUDE_CODE_USE_BEDROCK=1 を設定)
+          use_bedrock: "true"
+          # モデル指定は claude_args 経由 (action は ANTHROPIC_MODEL env を直接見ない)
+          claude_args: --model ${{ env.ANTHROPIC_MODEL }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
             あなたは TFP の共通レビュー基盤 (tfp-code-review) を使う PR レビュアーです。
