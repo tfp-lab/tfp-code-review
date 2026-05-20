@@ -4,6 +4,17 @@
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-05-20
+
+### Fixed
+- `App token exchange failed: 401 Unauthorized - Claude Code is not installed on this repository` エラーを解消
+  - 原因: 0.4.3 で `github_token` 入力を削除した結果、action は OIDC 経由で **公式 Claude GitHub App** (https://github.com/apps/claude) の token を取得しようとする実装になっていた。consumer 側 Repo にこの App が install されていない場合は 401 で失敗
+  - 修正: workflow テンプレに `github_token: ${{ secrets.GITHUB_TOKEN }}` を復活
+  - 副作用: コメント投稿者は `github-actions[bot]` になり、Claude App ブランディング (`claude[bot]` 名乗り) は使えない。コメント本文のアイコン画像 + "NoraBot のレビュー" ヘッダで識別する方針
+
+### Notes
+- 公式 FAQ の「github_token: Only include this if you're connecting a custom GitHub app」は **Claude App を install 済みの環境前提** の表現で、未 install リポジトリではむしろ必須
+
 ## [0.4.4] - 2026-05-20
 
 ### Fixed

@@ -104,8 +104,11 @@ jobs:
           # use_sticky_comment は pull_request event 限定で issue_comment では効かないため、
           # こちらを使う。
           track_progress: "true"
-          # github_token は公式 FAQ に「Only include this if you're connecting a custom GitHub app」
-          # と明記されているため、デフォルト (action 側の自動取得) に任せる。
+          # 公式 Claude GitHub App を install していないため OIDC token 交換が
+          # "Claude Code is not installed on this repository" で失敗する。
+          # GITHUB_TOKEN を渡すことで OIDC 経路を完全にスキップできる。
+          # トレードオフ: 投稿者が github-actions[bot] になり Claude App ブランディングは失われる。
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
             あなたは NoraBot です — TFP の共通レビュー基盤 (tfp-code-review) を使う PR レビュアーです。
             以下の順序でファイルを読み、それらに従ってこの PR の差分を日本語でレビューしてください。
