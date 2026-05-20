@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-20
+
+### Added
+- `USAGE.md`: 導入済み Repo の日常操作ガイド + 「プロジェクト個別設定の早見表」(どんなルールをどこに書くかの対応表 / `.tfp/review.md` テンプレ集)
+- `QUICKSTART_PROMPT.md`: LLM 一発導入用プロンプト + AI 不要の bash コマンド一式 (新規導入 / 共通追従 / アンインストール)
+- `scripts/md2html.py`: ドキュメント MD → HTML 変換ツール (`_html/` は gitignore)
+
+### Changed
+- `README.md`: ドキュメント役割別の index を追加
+- `AI_SETUP.md`: 関連ドキュメント節に USAGE.md / QUICKSTART_PROMPT.md を追加
+- `.gitignore`: `_html/` `__pycache__/` を追加
+
 ## [0.1.0] - 2026-05-20
 
 ### Added

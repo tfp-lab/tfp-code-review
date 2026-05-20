@@ -43,12 +43,22 @@ tfp-code-review/
 └── .github/workflows/claude-review.yml ← 薄い workflow (submodule から prompt を読む)
 ```
 
+## ドキュメント (役割別)
+
+| ファイル | 読むべき人 | 内容 |
+|---|---|---|
+| [README.md](README.md) | 全員 (最初の入口) | 概要・ディレクトリ構成 |
+| [QUICKSTART_PROMPT.md](QUICKSTART_PROMPT.md) | **新規 Repo に導入したい人** | コピペ用 LLM プロンプト + 手動 bash コマンド |
+| [AI_SETUP.md](AI_SETUP.md) | LLM / 詳細手順を見たい人 | 単一ページで完結する正式セットアップ手順 |
+| [USAGE.md](USAGE.md) | **導入済み Repo の利用者** | 日常操作 + プロジェクト個別設定の早見表 |
+| [CHANGELOG.md](CHANGELOG.md) | アップデート確認 | バージョン履歴 |
+
 ## 使い方 (新しい Repo に導入する場合)
 
-[**AI_SETUP.md**](AI_SETUP.md) を上から順に実行するだけ。
+**速い**: [QUICKSTART_PROMPT.md](QUICKSTART_PROMPT.md) を開いて、AI チャットに 1 つコピペ。
+**詳しい**: [AI_SETUP.md](AI_SETUP.md) を上から順に実行。
 
-人間の手でやる場合も、AI に丸投げする場合も、このページが正本。
-構成を変更したら、**まず AI_SETUP.md を更新**。次回以降の作業者 (人 or AI) が新しい手順で動く。
+どちらも最終的に同じ状態になります。構成を変更したら **両方とも更新** してください (docs と code は同じ PR で同期が原則)。
 
 ## 変更履歴
 

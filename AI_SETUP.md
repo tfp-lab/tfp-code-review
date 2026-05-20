@@ -229,7 +229,9 @@ git push
 
 ## 9. 関連ドキュメント
 
-- [README.md](README.md) — 人間向けのリポジトリ概要
+- [README.md](README.md) — 人間向けのリポジトリ概要・ドキュメント index
+- [QUICKSTART_PROMPT.md](QUICKSTART_PROMPT.md) — **コピペ一発でセットアップ** (LLM プロンプト + bash 一式)
+- [USAGE.md](USAGE.md) — 導入済み Repo での日常操作 + プロジェクト個別設定の早見表
 - [CHANGELOG.md](CHANGELOG.md) — 変更履歴
 - [prompts/CLAUDE.md](prompts/CLAUDE.md) — 共通システムプロンプト本体
 - [instructions/](instructions/) — 言語別レビュー観点
