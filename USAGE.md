@@ -1,7 +1,7 @@
-# USAGE.md — Norabot の使い方 & プロジェクト個別設定の早見表
+# USAGE.md — NoraBot の使い方 & プロジェクト個別設定の早見表
 
-> このドキュメントは **tfp-code-review を導入済みの Repo で、日常的に Norabot レビュー機能を使う人** 向けです。
-> Norabot は本基盤の AI レビュアー (Claude / Bedrock) の呼称です。
+> このドキュメントは **tfp-code-review を導入済みの Repo で、日常的に NoraBot レビュー機能を使う人** 向けです。
+> NoraBot は本基盤の AI レビュアー (Claude / Bedrock) の呼称です。
 > 初期セットアップは [AI_SETUP.md](AI_SETUP.md)、自動コピペで一発導入したい人は [QUICKSTART_PROMPT.md](QUICKSTART_PROMPT.md) を参照してください。
 
 ---

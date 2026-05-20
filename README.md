@@ -1,7 +1,7 @@
 # tfp-code-review
 
-> TFP の **共通 PR コードレビュー基盤** (レビュアー名: **Norabot**)。
-> 各リポジトリは submodule としてこれを取り込み、薄い workflow を 1 本コピーするだけで Norabot (AWS Bedrock 上の Claude) による自動レビューが立ち上がる。
+> TFP の **共通 PR コードレビュー基盤** (レビュアー名: **NoraBot**)。
+> 各リポジトリは submodule としてこれを取り込み、薄い workflow を 1 本コピーするだけで NoraBot (AWS Bedrock 上の Claude) による自動レビューが立ち上がる。
 
 ![reviewer](assets/icon.png)
 

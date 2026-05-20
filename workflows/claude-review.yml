@@ -1,4 +1,4 @@
-name: Norabot PR Review (Bedrock)
+name: NoraBot PR Review (Bedrock)
 
 # このワークフローは tfp-lab/tfp-code-review のテンプレートです。
 # 各 Repo が `.github/workflows/claude-review.yml` にコピーして使います。
@@ -7,10 +7,10 @@ name: Norabot PR Review (Bedrock)
 #   1. submodule (.tfp/code-review) を init
 #   2. submodule の prompts/CLAUDE.md と instructions/<lang>.instructions.md を読み
 #   3. Repo 固有の .tfp/review.md があればそれも読み
-#   4. Bedrock 経由で Norabot (Claude) にレビューさせる
+#   4. Bedrock 経由で NoraBot (Claude) にレビューさせる
 #
 # 自動レビュー: PR の open/synchronize/reopened
-# 手動再レビュー: PR コメントで `@Norabot` を含めて投稿 (例: `@Norabot review`)
+# 手動再レビュー: PR コメントで `@NoraBot` を含めて投稿 (例: `@NoraBot review`)
 
 on:
   pull_request:
@@ -45,7 +45,7 @@ jobs:
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request != null &&
        (contains(github.event.comment.body, '@norabot') ||
-        contains(github.event.comment.body, '@Norabot')))
+        contains(github.event.comment.body, '@NoraBot')))
 
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -66,7 +66,7 @@ jobs:
             echo "url=${{ env.REVIEWER_ICON_URL }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Run Norabot (Claude Code Action / Bedrock)
+      - name: Run NoraBot (Claude Code Action / Bedrock)
         uses: anthropics/claude-code-action@v1
         env:
           REVIEWER_ICON_URL: ${{ steps.icon.outputs.url }}
@@ -79,7 +79,7 @@ jobs:
           trigger_phrase: "@norabot"
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
-            あなたは Norabot です — TFP の共通レビュー基盤 (tfp-code-review) を使う PR レビュアーです。
+            あなたは NoraBot です — TFP の共通レビュー基盤 (tfp-code-review) を使う PR レビュアーです。
             以下の順序でファイルを読み、それらに従ってこの PR の差分を日本語でレビューしてください。
 
             1. .tfp/code-review/prompts/CLAUDE.md  (全社共通の方針・出力フォーマット)
@@ -93,8 +93,8 @@ jobs:
             出力ルール (詳細は 1 のファイルを参照):
             - レビュー本文は必ず PR コメントとして post してください (inline comment だけでなく必ず 1 件は通常コメントを残す)
             - 最初の行に必ず以下の画像マークダウンを入れる
-              ![Norabot](${{ steps.icon.outputs.url }})
-            - 続けて「Norabot のレビュー」と書く
+              ![NoraBot](${{ steps.icon.outputs.url }})
+            - 続けて「NoraBot のレビュー」と書く
             - 1 行サマリ
             - [must-fix] / [suggestion] / [nit] の優先度を付けた指摘リスト
             - 最後に良かった点を 1 つ以上
