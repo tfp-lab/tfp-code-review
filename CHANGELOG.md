@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-05-20
+
+### Changed
+- `_html/` を git 管理対象に変更 (これまで `.gitignore` 除外)。設定手順や使い方をブラウザで直接見せられるよう、HTML を成果物として同梱
+- README にドキュメント MD と HTML を併記する index 表を追加
+- 運用ルール: MD を編集したら同じ PR で HTML も再生成して commit (CHANGELOG にも反映)
+
 ## [0.2.0] - 2026-05-20
 
 ### Added

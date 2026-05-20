@@ -45,13 +45,16 @@ tfp-code-review/
 
 ## ドキュメント (役割別)
 
-| ファイル | 読むべき人 | 内容 |
-|---|---|---|
-| [README.md](README.md) | 全員 (最初の入口) | 概要・ディレクトリ構成 |
-| [QUICKSTART_PROMPT.md](QUICKSTART_PROMPT.md) | **新規 Repo に導入したい人** | コピペ用 LLM プロンプト + 手動 bash コマンド |
-| [AI_SETUP.md](AI_SETUP.md) | LLM / 詳細手順を見たい人 | 単一ページで完結する正式セットアップ手順 |
-| [USAGE.md](USAGE.md) | **導入済み Repo の利用者** | 日常操作 + プロジェクト個別設定の早見表 |
-| [CHANGELOG.md](CHANGELOG.md) | アップデート確認 | バージョン履歴 |
+| ファイル | 読むべき人 | 内容 | HTML (見やすい版) |
+|---|---|---|---|
+| [README.md](README.md) | 全員 (最初の入口) | 概要・ディレクトリ構成 | [\_html/README.html](_html/README.html) |
+| [QUICKSTART_PROMPT.md](QUICKSTART_PROMPT.md) | **新規 Repo に導入したい人** | コピペ用 LLM プロンプト + 手動 bash コマンド | [\_html/QUICKSTART_PROMPT.html](_html/QUICKSTART_PROMPT.html) |
+| [AI_SETUP.md](AI_SETUP.md) | LLM / 詳細手順を見たい人 | 単一ページで完結する正式セットアップ手順 | [\_html/AI_SETUP.html](_html/AI_SETUP.html) |
+| [USAGE.md](USAGE.md) | **導入済み Repo の利用者** | 日常操作 + プロジェクト個別設定の早見表 | [\_html/USAGE.html](_html/USAGE.html) |
+| [CHANGELOG.md](CHANGELOG.md) | アップデート確認 | バージョン履歴 | [\_html/CHANGELOG.html](_html/CHANGELOG.html) |
+
+> HTML 版は `scripts/md2html.py` で生成しています。**MD を編集したら HTML も同じ PR で更新** してください (CHANGELOG にも反映)。
+> 一括再生成: `for f in README.md AI_SETUP.md USAGE.md QUICKSTART_PROMPT.md CHANGELOG.md; do python3 scripts/md2html.py $f; done`
 
 ## 使い方 (新しい Repo に導入する場合)
 

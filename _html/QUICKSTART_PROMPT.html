@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>QUICKSTART_PROMPT</title>
+<style>:root {
+  --fg: #24292f;
+  --fg-strong: #0d1117;
+  --muted: #656d76;
+  --bg: #ffffff;
+  --bg-soft: #f6f8fa;
+  --code-bg: #f6f8fa;
+  --code-fg: #24292f;
+  --border: #d0d7de;
+  --border-soft: #eaeef2;
+  --link: #0969da;
+  --link-hover: #0550ae;
+  --accent: #0969da;
+  --accent-soft: #ddf4ff;
+  --warn-bg: #fff8c5;
+  --warn-border: #d4a72c;
+  --shadow: 0 1px 3px rgba(31, 35, 40, 0.08), 0 1px 2px rgba(31, 35, 40, 0.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #c9d1d9;
+    --fg-strong: #f0f6fc;
+    --muted: #8b949e;
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --code-bg: #161b22;
+    --code-fg: #c9d1d9;
+    --border: #30363d;
+    --border-soft: #21262d;
+    --link: #58a6ff;
+    --link-hover: #79c0ff;
+    --accent: #58a6ff;
+    --accent-soft: #0c2d6b;
+    --warn-bg: #341a00;
+    --warn-border: #9e6a03;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+}
+
+* { box-sizing: border-box; }
+html { font-size: 16px; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  padding: 0;
+  color: var(--fg);
+  background: var(--bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+               "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic",
+               "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "palt" 1;
+  line-height: 1.85;
+  letter-spacing: 0.02em;
+  word-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 3rem 1.75rem 6rem;
+}
+
+/* === Headings === */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--fg-strong);
+  line-height: 1.35;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+h1 {
+  font-size: 2.2rem;
+  margin: 0 0 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--border);
+}
+h2 {
+  font-size: 1.55rem;
+  margin: 3rem 0 1rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border-soft);
+  position: relative;
+}
+h2::before {
+  content: "";
+  position: absolute;
+  left: -1rem;
+  top: 0.4em;
+  width: 4px;
+  height: 1.1em;
+  background: var(--accent);
+  border-radius: 2px;
+}
+h3 {
+  font-size: 1.25rem;
+  margin: 2rem 0 0.7rem;
+}
+h4 {
+  font-size: 1.08rem;
+  margin: 1.5rem 0 0.5rem;
+  color: var(--fg);
+}
+h5, h6 { font-size: 1rem; margin: 1.2rem 0 0.4rem; }
+
+/* === Body text === */
+p { margin: 0.85rem 0; }
+strong { color: var(--fg-strong); font-weight: 700; }
+em { font-style: italic; color: var(--fg-strong); }
+
+a {
+  color: var(--link);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+a:hover {
+  color: var(--link-hover);
+  border-bottom-color: var(--link-hover);
+}
+
+/* === Code === */
+code {
+  font-family: "SFMono-Regular", "JetBrains Mono", Consolas,
+               "Liberation Mono", Menlo, monospace;
+  font-size: 0.88em;
+  background: var(--bg-soft);
+  color: var(--code-fg);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--border-soft);
+}
+pre {
+  background: var(--code-bg);
+  padding: 1.1rem 1.25rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  margin: 1.2rem 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* === Quote === */
+blockquote {
+  border-left: 4px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 0.6rem 1.1rem;
+  margin: 1.2rem 0;
+  border-radius: 0 6px 6px 0;
+  color: var(--fg);
+}
+blockquote p:first-child { margin-top: 0; }
+blockquote p:last-child { margin-bottom: 0; }
+
+/* === Lists === */
+ul, ol {
+  padding-left: 1.7rem;
+  margin: 0.7rem 0;
+}
+li { margin: 0.35rem 0; }
+li > ul, li > ol { margin: 0.3rem 0; }
+
+/* チェックボックス (タスクリスト) */
+li input[type="checkbox"] {
+  margin-right: 0.4rem;
+  transform: translateY(1px);
+  accent-color: var(--accent);
+}
+
+/* === HR === */
+hr {
+  border: none;
+  border-top: 1px solid var(--border-soft);
+  margin: 2.5rem 0;
+}
+
+/* === Tables === */
+table {
+  border-collapse: collapse;
+  margin: 1.3rem 0;
+  display: block;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  font-size: 0.95rem;
+}
+thead {
+  background: var(--bg-soft);
+}
+th, td {
+  border: none;
+  border-bottom: 1px solid var(--border-soft);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  font-weight: 700;
+  color: var(--fg-strong);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--bg-soft); }
+
+/* === Page header with icon === */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+.page-header .icon {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  padding: 4px;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+.page-header .title-block {
+  flex: 1;
+  min-width: 0;
+}
+.page-header .title-block .source {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  word-break: break-all;
+}
+
+/* === Meta header === */
+.meta {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin: 0 0 2rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--bg-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+}
+.meta code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.95em;
+  color: var(--muted);
+}
+
+/* === Mobile === */
+@media (max-width: 640px) {
+  .container { padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; }
+  h2 { font-size: 1.3rem; }
+  h2::before { display: none; }
+  h3 { font-size: 1.1rem; }
+  pre { font-size: 0.85rem; padding: 0.9rem; }
+  table { font-size: 0.88rem; }
+  th, td { padding: 0.5rem 0.7rem; }
+}
+
+/* === Print === */
+@media print {
+  body { background: #fff; color: #000; }
+  .container { max-width: none; padding: 0; }
+  pre, blockquote, table { box-shadow: none; }
+  a { color: #000; border-bottom-color: #999; }
+  h2::before { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="meta">source: <code>QUICKSTART_PROMPT.md</code></div>
+<h1>QUICKSTART_PROMPT.md — 一発導入プロンプト + Fallback コマンド</h1>
+<blockquote><p>「自分の Repo にもこの構成入れたい」と思った瞬間、<strong>このページから 1 つコピペすれば終わる</strong> ようにするのが目的です。</p></blockquote>
+<hr/>
+<h2>0. これは何?</h2>
+<p>このページは 2 種類の "コピペ素材" を提供します。</p>
+<ol>
+<li><strong>Section A</strong>: AI / LLM (Claude Code / Cursor / Copilot Chat 等) に <strong>丸投げするための日本語プロンプト</strong></li>
+<li><strong>Section B</strong>: AI が動かない / 手元で全部やりたい人用の <strong>bash コマンド一式</strong></li>
+</ol>
+<p>どちらも、(★) tfp-code-review に追加変更があればこのページが正本として更新されます。古い手順を信じないでください。</p>
+<hr/>
+<h2>Section A — AI に丸投げする (推奨)</h2>
+<h3>A-1. このまま貼るだけ</h3>
+<p>ターゲット Repo のルートで AI チャット (Claude Code / Cursor / Copilot Chat) を開き、以下を <strong>そのままコピペ</strong> してください。</p>
+<p>```` このリポジトリに TFP 共通レビュー基盤 (tfp-code-review) を導入してください。 正本の手順書は GitHub の以下です。最初にこれを必ず取得して読んでから作業してください。</p>
+<p>https://raw.githubusercontent.com/tfp-lab/tfp-code-review/main/AI_SETUP.md</p>
+<p>要件:</p>
+<ul>
+<li>submodule として <code>.tfp/code-review</code> に取り込む</li>
+<li><code>workflows/claude-review.yml</code> を <code>.github/workflows/claude-review.yml</code> にコピー</li>
+<li>このリポジトリ固有のルールは <code>.tfp/review.md</code> に書く (空でも作成)</li>
+<li>作業内容を <code>git add</code> + <code>git commit</code> まで実施。<code>git push</code> はしないで人間に確認を取る</li>
+</ul>
+<p>このリポジトリの主言語と特殊事情は私 (人間) に確認してください。 わからない場合は本ページの Section B (bash コマンド一式) を参照して forced-mode で実行しても構いません。 ````</p>
+<p>これで AI は AI_SETUP.md を読み、submodule 追加 → workflow コピー → <code>.tfp/review.md</code> 作成 → commit までやってくれます。</p>
+<h3>A-2. もう少しお節介なバージョン (AI に推測させたくない)</h3>
+<p>```` このリポジトリに TFP 共通レビュー基盤 (tfp-code-review) を導入してください。</p>
+<p>正本: https://raw.githubusercontent.com/tfp-lab/tfp-code-review/main/AI_SETUP.md</p>
+<p>実行ステップ:</p>
+<ol>
+<li>上記 URL の AI_SETUP.md を取得して読む</li>
+<li>このリポジトリの言語構成を git ls-files の拡張子から推定し、私に確認</li>
+<li>AI_SETUP.md の手順を実行 (submodule 追加 / workflow コピー / .tfp/review.md 作成)</li>
+<li><code>.tfp/review.md</code> には以下を書き込む</li>
+</ol>
+<ul>
+<li>主言語</li>
+<li>特殊事情 (独自フレームワーク・レガシー領域・除外ルール) — 私に質問しながら埋める</li>
+<li>PR コミット規約 — 既存 git log のパターンを参考に提案</li>
+</ul>
+<ol>
+<li>commit までやって push はしない</li>
+</ol>
+<p>途中でわからなくなったら本ページ (QUICKSTART_PROMPT.md) の Section B を参照。 ````</p>
+<h3>A-3. 既存導入済み Repo で「最新の共通ルールに追従」だけしたい</h3>
+<p>```<code> このリポジトリには既に </code>.tfp/code-review` submodule があります。 共通ルールを最新版に追従させてください。</p>
+<p>実行:</p>
+<ol>
+<li>git submodule update --remote .tfp/code-review</li>
+<li>tfp-code-review の最新 CHANGELOG.md を確認し、Breaking 変更があれば私に報告</li>
+<li><code>.tfp/review.md</code> の内容が共通ルール変更と矛盾していないか軽く点検</li>
+<li>git add .tfp/code-review &amp;&amp; git commit -m "Update tfp-code-review submodule"</li>
+</ol>
+<p>````</p>
+<hr/>
+<h2>Section B — bash コマンド一式 (AI 不要)</h2>
+<p>AI が動かない / シェルだけで完結したい場合の手順。<strong>ターゲット Repo のルートで実行</strong> してください。</p>
+<h3>B-1. 新規導入 (まだ submodule 入っていない Repo)</h3>
+<pre><code class="language-bash"># 1. submodule 追加
+git submodule add https://github.com/tfp-lab/tfp-code-review.git .tfp/code-review
+git submodule update --init --recursive
+
+# 2. workflow をコピー
+mkdir -p .github/workflows
+cp .tfp/code-review/workflows/claude-review.yml .github/workflows/claude-review.yml
+
+# 3. .tfp/review.md を作成 (最低限のテンプレ)
+mkdir -p .tfp
+cat &gt; .tfp/review.md &lt;&lt;'EOF'
+# $(basename "$PWD") 固有のレビュールール
+
+このリポジトリでは特殊事情なし。共通ルールに従う。
+
+(必要に応じて以下を埋める)
+
+## 言語
+&lt;Go / TypeScript / PHP …&gt;
+
+## 追加ルール
+
+## 除外ルール
+EOF
+
+# 4. commit (push は手動で確認してから)
+git add .gitmodules .tfp .github/workflows/claude-review.yml
+git commit -m "Add tfp-code-review submodule for Claude PR review"
+
+# 5. (任意) push して PR を出す
+# git push -u origin &lt;your-branch&gt;
+# gh pr create --title "Add Claude PR review" --body "Setup via tfp-code-review"</code></pre>
+<h3>B-2. 共通ルール追従 (既に導入済み)</h3>
+<pre><code class="language-bash">git submodule update --remote .tfp/code-review
+git add .tfp/code-review
+git commit -m "Update tfp-code-review submodule"
+git push</code></pre>
+<h3>B-3. workflow がコピー先と古くなっていないか確認</h3>
+<pre><code class="language-bash"># テンプレと現行 workflow を diff
+diff .tfp/code-review/workflows/claude-review.yml .github/workflows/claude-review.yml</code></pre>
+<p>差分が「env (model / region) のカスタマイズだけ」なら OK。それ以外の構造的な差があれば、テンプレ最新版を取り込み直す:</p>
+<pre><code class="language-bash"># モデル指定だけ保存して再コピー
+cp .github/workflows/claude-review.yml /tmp/claude-review.yml.bak
+cp .tfp/code-review/workflows/claude-review.yml .github/workflows/claude-review.yml
+# /tmp/claude-review.yml.bak を見て env だけ手で書き戻す</code></pre>
+<h3>B-4. アンインストール</h3>
+<pre><code class="language-bash">git submodule deinit -f .tfp/code-review
+git rm -f .tfp/code-review
+rm -rf .git/modules/.tfp
+git rm -f .gitmodules .github/workflows/claude-review.yml .tfp/review.md
+git commit -m "Remove tfp-code-review submodule"</code></pre>
+<hr/>
+<h2>Section C — 動作確認チェックリスト</h2>
+<p>導入後、以下を確認:</p>
+<ul>
+<li><input type="checkbox" disabled /> <code>.gitmodules</code> に <code>[submodule ".tfp/code-review"]</code> が記録されている</li>
+<li><input type="checkbox" disabled /> <code>cat .tfp/code-review/AI_SETUP.md</code> でドキュメントが読める</li>
+<li><input type="checkbox" disabled /> <code>cat .github/workflows/claude-review.yml</code> で workflow が存在</li>
+<li><input type="checkbox" disabled /> <code>cat .tfp/review.md</code> でファイルが存在 (空でも OK)</li>
+<li><input type="checkbox" disabled /> リポジトリ Settings → Secrets に <code>AWS_BEARER_TOKEN_BEDROCK</code> が登録済み</li>
+<li><input type="checkbox" disabled /> テスト PR を 1 本出してレビューコメントが付くこと</li>
+</ul>
+<hr/>
+<h2>Section D — 困ったらここを見る</h2>
+<table>
+<thead><tr><th>症状</th><th>対処</th></tr></thead>
+<tbody>
+<tr><td>AI が AI_SETUP.md を読めない (権限なし)</td><td>tfp-code-review が public でないなら一時的に Section B の bash で手動</td></tr>
+<tr><td>submodule init が SSH エラー</td><td>URL を https:// に揃える: <code>git config -f .gitmodules submodule.".tfp/code-review".url https://github.com/tfp-lab/tfp-code-review.git</code></td></tr>
+<tr><td><code>.tfp/review.md</code> のテンプレが古い</td><td>tfp-code-review の <code>examples/consumer-repo/.tfp/review.md</code> を見る</td></tr>
+<tr><td>Workflow が動かない</td><td><code>gh run list -L 5</code> でログ確認、Actions タブで失敗メッセージを見る</td></tr>
+</tbody></table>
+<p>それ以外は <a href="AI_SETUP.md">AI_SETUP.md</a> §6 トラブルシューティングへ。</p>
+<hr/>
+<h2>Section E — このページ自体の更新ルール</h2>
+<p>tfp-code-review の構成を変更したら、<strong>このページも一緒に更新</strong> してください。とくに:</p>
+<ul>
+<li>AI_SETUP.md の手順が変わったら、Section A の指示文を見直す</li>
+<li>bash コマンドの順序が変わったら Section B を更新</li>
+<li>Breaking 変更時は CHANGELOG.md にも追記</li>
+</ul>
+<p>このページが古いと、AI / 人間とも壊れた手順で動きます。<strong>docs と code は同じ PR で同期</strong> が原則。</p>
+</div>
+</body>
+</html>
