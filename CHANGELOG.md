@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-05-20
+
+### Fixed
+- レビューが PR コメントとして表示されない不具合を修正
+  - 原因: `use_sticky_comment` 未設定 (デフォルト `false`) では action は inline comment しか post せず、Claude が `mcp__github_inline_comment__create_inline_comment` を呼ばない場合は `No buffered inline comments` で終了し PR に何も書かれていなかった。CI 自体は success ステータスで終わるため検出が難しい
+  - 修正: workflow に `use_sticky_comment: "true"` を追加。Claude の最終出力テキストを 1 件の通常 PR コメント (issue comment) として post するモードに切替
+- `if:` 条件を簡略化。GitHub Actions の `contains()` は case-insensitive のため `@norabot` 1 つで `@NoraBot` `@NORABOT` 全部マッチ。`@NoraBot` の重複条件を削除
+
 ## [0.4.0] - 2026-05-20
 
 ### Added

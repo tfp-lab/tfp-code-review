@@ -44,8 +44,7 @@ jobs:
       github.event_name == 'pull_request' ||
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request != null &&
-       (contains(github.event.comment.body, '@norabot') ||
-        contains(github.event.comment.body, '@NoraBot')))
+       contains(github.event.comment.body, '@norabot'))
 
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -77,6 +76,9 @@ jobs:
           claude_args: --model ${{ env.ANTHROPIC_MODEL }}
           # コメントトリガーフレーズ。@norabot review などで再レビューを呼べる
           trigger_phrase: "@norabot"
+          # Claude の最終出力を 1 件の通常 PR コメント (issue comment) として post
+          # これが false (デフォルト) だと inline comment しか出ず、PR トップに何も表示されない
+          use_sticky_comment: "true"
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
             あなたは NoraBot です — TFP の共通レビュー基盤 (tfp-code-review) を使う PR レビュアーです。
