@@ -4,10 +4,19 @@
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-05-20
+
+### Changed
+- HTML 配置を `_html/` (gitignore) → **`docs/` (git 管理)** に変更。配布用は `docs/` のみで一本化
+- `scripts/md2html.py` の CSS を全面刷新 (Linear / Anthropic docs 風)。indigo accent / Inter + Hiragino / 引用ブロックの callout 化 / テーブル radius / モバイル最適化 / `text-wrap: balance` / `prefers-color-scheme: dark` 強化
+- `scripts/md2html.py` に `--out-dir` オプション追加 (出力ディレクトリ指定)
+
+### Fixed
+- 0.2.1 の `_html/` を git 追跡する判断を撤回 (試し生成と公開用が混在していた)。`docs/` を公開専用に分離
+
 ## [0.2.1] - 2026-05-20
 
 ### Changed
-- `_html/` を git 管理対象に変更 (これまで `.gitignore` 除外)。設定手順や使い方をブラウザで直接見せられるよう、HTML を成果物として同梱
 - README にドキュメント MD と HTML を併記する index 表を追加
 - 運用ルール: MD を編集したら同じ PR で HTML も再生成して commit (CHANGELOG にも反映)
 

@@ -34,289 +34,427 @@ from pathlib import Path
 
 
 CSS = """\
+/*
+ * Modern documentation theme inspired by Linear / Anthropic docs / Vercel docs.
+ * Optimized for Japanese reading: generous line-height, palt kerning, IBM Plex JP fallback.
+ */
+
 :root {
-  --fg: #24292f;
-  --fg-strong: #0d1117;
-  --muted: #656d76;
-  --bg: #ffffff;
-  --bg-soft: #f6f8fa;
-  --code-bg: #f6f8fa;
-  --code-fg: #24292f;
-  --border: #d0d7de;
-  --border-soft: #eaeef2;
-  --link: #0969da;
-  --link-hover: #0550ae;
-  --accent: #0969da;
-  --accent-soft: #ddf4ff;
-  --warn-bg: #fff8c5;
-  --warn-border: #d4a72c;
-  --shadow: 0 1px 3px rgba(31, 35, 40, 0.08), 0 1px 2px rgba(31, 35, 40, 0.04);
+  /* Neutrals (warm, not pure gray) */
+  --neutral-0: #ffffff;
+  --neutral-50: #fafaf9;
+  --neutral-100: #f5f5f4;
+  --neutral-150: #ececea;
+  --neutral-200: #e7e5e4;
+  --neutral-300: #d6d3d1;
+  --neutral-500: #78716c;
+  --neutral-600: #57534e;
+  --neutral-700: #44403c;
+  --neutral-800: #292524;
+  --neutral-900: #1c1917;
+  --neutral-950: #0c0a09;
+
+  /* Accent: deep indigo (works well in light + dark) */
+  --accent-300: #a5b4fc;
+  --accent-500: #6366f1;
+  --accent-600: #4f46e5;
+  --accent-700: #4338ca;
+  --accent-bg: #eef2ff;
+
+  /* Surface tokens */
+  --bg: var(--neutral-0);
+  --bg-elevated: var(--neutral-50);
+  --bg-subtle: var(--neutral-100);
+  --bg-code: var(--neutral-50);
+  --fg: var(--neutral-800);
+  --fg-strong: var(--neutral-950);
+  --fg-muted: var(--neutral-500);
+  --border: var(--neutral-200);
+  --border-strong: var(--neutral-300);
+  --link: var(--accent-600);
+  --link-hover: var(--accent-700);
+  --selection: var(--accent-bg);
+
+  /* Shadows: more elevation than before */
+  --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.04);
+  --shadow-md: 0 1px 3px rgba(28, 25, 23, 0.06), 0 4px 12px rgba(28, 25, 23, 0.04);
+  --shadow-lg: 0 4px 6px rgba(28, 25, 23, 0.05), 0 12px 24px rgba(28, 25, 23, 0.06);
+
+  /* Radii (consistent system) */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 }
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --fg: #c9d1d9;
-    --fg-strong: #f0f6fc;
-    --muted: #8b949e;
-    --bg: #0d1117;
-    --bg-soft: #161b22;
-    --code-bg: #161b22;
-    --code-fg: #c9d1d9;
-    --border: #30363d;
-    --border-soft: #21262d;
-    --link: #58a6ff;
-    --link-hover: #79c0ff;
-    --accent: #58a6ff;
-    --accent-soft: #0c2d6b;
-    --warn-bg: #341a00;
-    --warn-border: #9e6a03;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --bg: #0a0a0a;
+    --bg-elevated: #141414;
+    --bg-subtle: #1a1a1a;
+    --bg-code: #131313;
+    --fg: #d4d4d8;
+    --fg-strong: #fafafa;
+    --fg-muted: #71717a;
+    --border: #27272a;
+    --border-strong: #3f3f46;
+    --accent-bg: rgba(99, 102, 241, 0.12);
+    --link: #818cf8;
+    --link-hover: #a5b4fc;
+    --selection: rgba(99, 102, 241, 0.3);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.5);
   }
 }
 
-* { box-sizing: border-box; }
-html { font-size: 16px; scroll-behavior: smooth; }
+/* ── Reset & base ───────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   padding: 0;
   color: var(--fg);
   background: var(--bg);
-  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
-               "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic",
-               "Segoe UI", Roboto, sans-serif;
-  font-feature-settings: "palt" 1;
-  line-height: 1.85;
-  letter-spacing: 0.02em;
-  word-wrap: break-word;
+  font-family:
+    "Inter", -apple-system, BlinkMacSystemFont,
+    "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+    "Yu Gothic", "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "palt" 1, "ss02" 1, "cv11" 1;
+  font-variant-ligatures: contextual common-ligatures;
+  line-height: 1.78;
+  letter-spacing: 0.005em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
+
+::selection { background: var(--selection); color: inherit; }
 
 .container {
-  max-width: 880px;
+  max-width: 768px;
   margin: 0 auto;
-  padding: 3rem 1.75rem 6rem;
+  padding: 4rem 2rem 8rem;
 }
 
-/* === Headings === */
+/* ── Typography: headings ───────────────────────────────── */
+
 h1, h2, h3, h4, h5, h6 {
   color: var(--fg-strong);
-  line-height: 1.35;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.018em;
+  text-wrap: balance;
 }
+
 h1 {
-  font-size: 2.2rem;
-  margin: 0 0 1.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--border);
+  font-size: clamp(2rem, 1.6rem + 1.5vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.028em;
+  margin: 0 0 1.25rem;
+  padding: 0;
 }
+h1 + p {
+  font-size: 1.1rem;
+  color: var(--fg-muted);
+  line-height: 1.65;
+  margin-top: -0.4rem;
+  margin-bottom: 2.5rem;
+}
+
 h2 {
-  font-size: 1.55rem;
-  margin: 3rem 0 1rem;
-  padding-bottom: 0.35rem;
-  border-bottom: 1px solid var(--border-soft);
-  position: relative;
+  font-size: 1.5rem;
+  margin: 4rem 0 1.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
 }
-h2::before {
-  content: "";
-  position: absolute;
-  left: -1rem;
-  top: 0.4em;
-  width: 4px;
-  height: 1.1em;
-  background: var(--accent);
-  border-radius: 2px;
-}
+
 h3 {
-  font-size: 1.25rem;
-  margin: 2rem 0 0.7rem;
+  font-size: 1.2rem;
+  margin: 2.5rem 0 0.75rem;
 }
 h4 {
-  font-size: 1.08rem;
-  margin: 1.5rem 0 0.5rem;
+  font-size: 1.05rem;
+  margin: 1.75rem 0 0.5rem;
   color: var(--fg);
 }
-h5, h6 { font-size: 1rem; margin: 1.2rem 0 0.4rem; }
+h5, h6 {
+  font-size: 0.95rem;
+  margin: 1.4rem 0 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fg-muted);
+  font-weight: 600;
+}
 
-/* === Body text === */
-p { margin: 0.85rem 0; }
-strong { color: var(--fg-strong); font-weight: 700; }
-em { font-style: italic; color: var(--fg-strong); }
+/* ── Body copy ──────────────────────────────────────────── */
 
+p { margin: 1rem 0; }
+p:first-child { margin-top: 0; }
+
+strong { color: var(--fg-strong); font-weight: 600; }
+em { font-style: italic; }
+
+/* Links: refined underline animation */
 a {
   color: var(--link);
   text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
+  background-image: linear-gradient(transparent calc(100% - 1px), currentColor 1px);
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  transition: background-size 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s;
+  padding-bottom: 1px;
 }
 a:hover {
   color: var(--link-hover);
-  border-bottom-color: var(--link-hover);
+  background-size: 100% 100%;
 }
 
-/* === Code === */
-code {
-  font-family: "SFMono-Regular", "JetBrains Mono", Consolas,
-               "Liberation Mono", Menlo, monospace;
-  font-size: 0.88em;
-  background: var(--bg-soft);
-  color: var(--code-fg);
-  padding: 0.15em 0.4em;
-  border-radius: 4px;
-  border: 1px solid var(--border-soft);
+/* ── Code ───────────────────────────────────────────────── */
+
+code, kbd, samp, pre {
+  font-family:
+    "JetBrains Mono", "SF Mono", "SFMono-Regular", "Cascadia Code",
+    "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-feature-settings: "calt" 1, "ss01" 1;
+  font-variant-ligatures: contextual;
 }
-pre {
-  background: var(--code-bg);
-  padding: 1.1rem 1.25rem;
-  border-radius: 8px;
-  overflow-x: auto;
+
+code {
+  font-size: 0.875em;
+  background: var(--bg-subtle);
+  color: var(--fg-strong);
+  padding: 0.13em 0.4em;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  margin: 1.2rem 0;
-  font-size: 0.92rem;
-  line-height: 1.6;
+  white-space: nowrap;
+}
+
+pre {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.25rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.65;
+  box-shadow: var(--shadow-sm);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+pre::-webkit-scrollbar { height: 8px; }
+pre::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
 }
 pre code {
   background: transparent;
   border: none;
   padding: 0;
   font-size: inherit;
-  color: inherit;
+  color: var(--fg);
+  white-space: pre;
 }
 
-/* === Quote === */
+/* ── Blockquote: callout style ─────────────────────────── */
+
 blockquote {
-  border-left: 4px solid var(--accent);
-  background: var(--accent-soft);
-  padding: 0.6rem 1.1rem;
-  margin: 1.2rem 0;
-  border-radius: 0 6px 6px 0;
+  margin: 1.75rem 0;
+  padding: 1rem 1.25rem;
+  background: var(--accent-bg);
+  border-left: 3px solid var(--accent-500);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   color: var(--fg);
+  position: relative;
 }
 blockquote p:first-child { margin-top: 0; }
 blockquote p:last-child { margin-bottom: 0; }
+blockquote strong { color: var(--accent-700); }
+@media (prefers-color-scheme: dark) {
+  blockquote strong { color: var(--accent-300); }
+}
 
-/* === Lists === */
+/* ── Lists ──────────────────────────────────────────────── */
+
 ul, ol {
-  padding-left: 1.7rem;
-  margin: 0.7rem 0;
+  padding-left: 1.65rem;
+  margin: 1rem 0;
 }
-li { margin: 0.35rem 0; }
-li > ul, li > ol { margin: 0.3rem 0; }
+li { margin: 0.4rem 0; padding-left: 0.2rem; }
+li::marker { color: var(--fg-muted); }
+li > ul, li > ol { margin: 0.4rem 0; }
 
-/* チェックボックス (タスクリスト) */
+/* Task list */
 li input[type="checkbox"] {
-  margin-right: 0.4rem;
-  transform: translateY(1px);
-  accent-color: var(--accent);
+  margin-right: 0.55rem;
+  margin-left: -1.4rem;
+  transform: translateY(1px) scale(1.05);
+  accent-color: var(--accent-600);
+  cursor: default;
 }
 
-/* === HR === */
+/* ── HR ─────────────────────────────────────────────────── */
+
 hr {
   border: none;
-  border-top: 1px solid var(--border-soft);
-  margin: 2.5rem 0;
+  height: 1px;
+  background: var(--border);
+  margin: 3rem 0;
 }
 
-/* === Tables === */
+/* ── Tables ─────────────────────────────────────────────── */
+
 table {
   border-collapse: collapse;
-  margin: 1.3rem 0;
+  margin: 1.75rem 0;
+  width: 100%;
   display: block;
   overflow-x: auto;
-  border-radius: 8px;
   border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  font-size: 0.95rem;
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+  box-shadow: var(--shadow-sm);
+  scrollbar-width: thin;
 }
 thead {
-  background: var(--bg-soft);
+  background: var(--bg-subtle);
 }
 th, td {
   border: none;
-  border-bottom: 1px solid var(--border-soft);
-  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  padding: 0.7rem 1rem;
   text-align: left;
   vertical-align: top;
 }
 th {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--fg-strong);
-  border-bottom: 2px solid var(--border);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover { background: var(--bg-soft); }
+tbody tr {
+  transition: background-color 0.12s;
+}
+tbody tr:hover { background: var(--bg-elevated); }
+td code, th code { white-space: nowrap; }
 
-/* === Page header with icon === */
+/* ── Page header with icon ─────────────────────────────── */
+
 .page-header {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin: 0 0 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-soft);
+  margin: 0 0 3rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
 }
 .page-header .icon {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
-  border-radius: 12px;
-  background: var(--bg-soft);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
   padding: 4px;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
+  box-shadow: var(--shadow-sm);
 }
 .page-header .title-block {
   flex: 1;
   min-width: 0;
 }
 .page-header .title-block .source {
-  font-size: 0.78rem;
-  color: var(--muted);
-  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.75rem;
+  color: var(--fg-muted);
+  font-family:
+    "JetBrains Mono", "SF Mono", "SFMono-Regular", monospace;
   word-break: break-all;
+  letter-spacing: 0;
 }
 
-/* === Meta header === */
+/* ── Meta (no-icon fallback) ───────────────────────────── */
+
 .meta {
-  color: var(--muted);
-  font-size: 0.82rem;
-  margin: 0 0 2rem;
-  padding: 0.6rem 0.9rem;
-  background: var(--bg-soft);
-  border-left: 3px solid var(--accent);
-  border-radius: 0 4px 4px 0;
+  display: inline-block;
+  font-size: 0.78rem;
+  color: var(--fg-muted);
+  margin: 0 0 3rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family:
+    "JetBrains Mono", "SF Mono", "SFMono-Regular", monospace;
+  letter-spacing: 0;
 }
 .meta code {
   background: transparent;
   border: none;
   padding: 0;
-  font-size: 0.95em;
-  color: var(--muted);
+  font-size: inherit;
+  color: inherit;
+  white-space: normal;
 }
 
-/* === Mobile === */
-@media (max-width: 640px) {
-  .container { padding: 1.5rem 1rem 4rem; }
-  h1 { font-size: 1.7rem; }
-  h2 { font-size: 1.3rem; }
-  h2::before { display: none; }
+/* ── Image (when used inline as content, not header icon) ── */
+
+img:not(.icon) {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  margin: 0.5rem 0;
+}
+p > img:not(.icon):only-child {
+  display: block;
+  margin: 1.5rem auto;
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Mobile ─────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .container { padding: 2rem 1.25rem 5rem; }
+  h1 { font-size: 1.65rem; }
+  h2 { font-size: 1.3rem; margin-top: 3rem; padding-top: 1.25rem; }
   h3 { font-size: 1.1rem; }
-  pre { font-size: 0.85rem; padding: 0.9rem; }
-  table { font-size: 0.88rem; }
-  th, td { padding: 0.5rem 0.7rem; }
+  pre { font-size: 0.78rem; padding: 0.9rem; border-radius: var(--radius-sm); }
+  table { font-size: 0.85rem; }
+  th, td { padding: 0.55rem 0.75rem; }
+  blockquote { padding: 0.8rem 1rem; }
 }
 
-/* === Print === */
+/* ── Print ──────────────────────────────────────────────── */
+
 @media print {
+  :root {
+    --bg: #fff;
+    --fg: #000;
+    --fg-strong: #000;
+    --fg-muted: #444;
+    --border: #ccc;
+    --bg-subtle: #f7f7f7;
+  }
   body { background: #fff; color: #000; }
   .container { max-width: none; padding: 0; }
-  pre, blockquote, table { box-shadow: none; }
-  a { color: #000; border-bottom-color: #999; }
-  h2::before { display: none; }
+  pre, blockquote, table { box-shadow: none; break-inside: avoid; }
+  h1, h2, h3 { break-after: avoid; }
+  a { color: #000; background: none; text-decoration: underline; }
 }
 """
 
@@ -541,6 +679,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Markdown → HTML (stdlib only)")
     parser.add_argument("input", help="Markdown ファイルのパス")
     parser.add_argument("-o", "--output", help="出力 HTML パス (省略時 _html/ 配下)")
+    parser.add_argument(
+        "--out-dir",
+        help="出力ディレクトリ (省略時は input と同じディレクトリの _html/)",
+    )
     parser.add_argument("--title", help="HTML title (省略時はファイル名)")
     parser.add_argument(
         "--icon",
@@ -582,6 +724,8 @@ def main() -> int:
 
     if args.output:
         dst = Path(args.output).resolve()
+    elif args.out_dir:
+        dst = Path(args.out_dir).resolve() / f"{src.stem}.html"
     else:
         dst = src.parent / "_html" / f"{src.stem}.html"
 
