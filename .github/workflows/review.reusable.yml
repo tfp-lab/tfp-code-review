@@ -12,17 +12,17 @@ name: NoraBot Reusable Review (Bedrock)
 #         AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
 #       # 任意: モデルやリージョンを上書きする場合
 #       with:
-#         model: jp.anthropic.claude-sonnet-4-6
+#         model: global.anthropic.claude-sonnet-5-5
 #         aws_region: ap-northeast-1
 
 on:
   workflow_call:
     inputs:
       model:
-        description: "Bedrock inference profile ID (例: jp.anthropic.claude-sonnet-4-6)"
+        description: "Bedrock inference profile ID (例: global.anthropic.claude-sonnet-5-5)"
         required: false
         type: string
-        default: jp.anthropic.claude-sonnet-4-6
+        default: global.anthropic.claude-sonnet-5-5
       aws_region:
         description: "AWS Bedrock のリージョン"
         required: false
@@ -261,7 +261,7 @@ jobs:
             - <最低 1 つ>
 
             ---
-            <sub>🤖 _Reviewed by **NoraBot** (Claude Sonnet 4.6 via AWS Bedrock) · 共通基盤: [tfp-code-review](https://github.com/tfp-lab/tfp-code-review)_</sub>
+            <sub>🤖 _Reviewed by **NoraBot** (Claude Sonnet 5.5 via AWS Bedrock) · 共通基盤: [tfp-code-review](https://github.com/tfp-lab/tfp-code-review)_</sub>
             ```
 
             ### 長さの制約

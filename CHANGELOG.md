@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Changed
+- デフォルトモデルを `jp.anthropic.claude-sonnet-4-6` から `global.anthropic.claude-sonnet-5-5` に変更
+  - Sonnet 5.5 は `jp.` の inference profile が無く global のみ (リクエストが東京以外のリージョンで処理される場合がある)
+  - PR コメントのフッター表記を「Claude Sonnet 5.5 via AWS Bedrock」に更新
+  - 旧モデルに戻す場合は caller の `with: model: jp.anthropic.claude-sonnet-4-6` で上書き
+
 ## [0.7.3] - 2026-05-20
 
 ### Fixed (Documentation)

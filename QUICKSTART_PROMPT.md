@@ -180,7 +180,7 @@ git commit -m "Remove NoraBot PR review"
 
 ![AWS_BEARER_TOKEN_BEDROCK が Repository secrets に登録された状態](assets/value.jpg)
 
-- [ ] AWS Bedrock コンソール (東京) で Claude Sonnet 4.6 へのアクセス Granted
+- [ ] AWS Bedrock コンソール (東京) で Claude Sonnet 5.5 へのアクセス Granted
 - [ ] テスト PR を 1 本出してレビューコメントが付くこと
 
 ---
