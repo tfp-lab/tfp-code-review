@@ -44,7 +44,7 @@ git commit -m "Migrate to tfp-code-review v0.7 Reusable workflow"
   - 登録後、以下のように Repository secrets 一覧に表示されていれば OK:
 
   ![AWS_BEARER_TOKEN_BEDROCK が Repository secrets に登録された状態](assets/value.jpg)
-- AWS Bedrock の **東京リージョン (ap-northeast-1)** で Claude Sonnet 4.6 へのアクセスが Granted
+- AWS Bedrock の **東京リージョン (ap-northeast-1)** で Claude Sonnet 5.5 (`global.anthropic.claude-sonnet-5-5`) へのアクセスが Granted
 - ターゲット Repo のデフォルトブランチが `main` (異なる場合は手順中の `main` を読み替え)
 
 ---
@@ -138,7 +138,7 @@ jobs:
 
 ### Step 3: (任意) Repo 固有のモデル / リージョン上書き
 
-デフォルト (Sonnet 4.6 / 東京) で良ければスキップ。変更したい場合のみ:
+デフォルト (Sonnet 5.5 / global inference profile、呼び出しは東京リージョン) で良ければスキップ。変更したい場合のみ:
 
 ```yaml
 jobs:
@@ -147,7 +147,7 @@ jobs:
     secrets:
       AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
     with:
-      model: jp.anthropic.claude-opus-4-7      # 他のモデルへ
+      model: jp.anthropic.claude-opus-5-5      # 他のモデルへ
       aws_region: us-east-1                     # 他リージョンへ
 ```
 

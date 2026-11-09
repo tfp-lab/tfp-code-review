@@ -218,16 +218,16 @@ LLM レビューは万能ではありません。**理由を一文書いて却�
 
 ```yaml
 env:
-  ANTHROPIC_MODEL: jp.anthropic.claude-sonnet-4-6   # ここ
+  ANTHROPIC_MODEL: global.anthropic.claude-sonnet-5-5   # ここ
   AWS_REGION: ap-northeast-1                         # ここ
 ```
 
-候補 (東京リージョン):
+候補 (`aws_region: ap-northeast-1` から呼び出し。2026-11 時点で `list-inference-profiles` により確認):
 
-- `jp.anthropic.claude-sonnet-4-6` — 推奨
-- `jp.anthropic.claude-sonnet-4-5` — フォールバック
-- `jp.anthropic.claude-opus-4-7` — 大きい PR / じっくり見たいとき
-- `jp.anthropic.claude-haiku-4-5` — 軽量・高速
+- `global.anthropic.claude-sonnet-5-5` — 推奨 (Sonnet 5.5 は global のみ。リクエストが東京以外で処理される場合がある)
+- `jp.anthropic.claude-sonnet-4-6` — 東京リージョン内で完結させたいとき
+- `jp.anthropic.claude-opus-5-5` — 大きい PR / じっくり見たいとき
+- `jp.anthropic.claude-haiku-5-5` — 軽量・高速
 
 ---
 
